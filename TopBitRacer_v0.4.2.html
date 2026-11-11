@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.1</title>
+<title>TopBitRacer v0.4.2</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.1</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.2</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.1</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.2</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -1691,6 +1691,43 @@ function drawStartBanner(fb, seg, camY) {
 }
 
 // full race view. ctx: { T, sky, theme, cam:{x,z}, player, cars, bgOff, shakeX }
+// ---------------- speed lines ----------------
+// Each streak is a point in the world (track z, lateral x in road widths, height above the road).
+// It is projected through the same segments as the road, so it bends with curves and rides hills,
+// and its tail always points down the road toward the vanishing point.
+function projStreak(R, z, x, h) {
+  const T = R.T, N = T.segs.length;
+  z = ((z % T.length) + T.length) % T.length;
+  const seg = T.segs[Math.floor(z / SEG_LEN) % N];
+  if (seg.pf !== R.frame || seg.p1.c <= CAM_DEPTH * 2) return null;
+  const k = (z % SEG_LEN) / SEG_LEN, a = seg.p1.s, b = seg.p2.s;
+  const sc = a.scale + (b.scale - a.scale) * k;
+  return { x: a.x + (b.x - a.x) * k + sc * x * ROAD_W * KX, y: a.y + (b.y - a.y) * k - sc * h * KY };
+}
+// Liang-Barsky: clip a segment to the screen so huge near-camera lines stay cheap
+function clipSeg(a, b) {
+  let t0 = 0, t1 = 1; const dx = b.x - a.x, dy = b.y - a.y;
+  const P = [-dx, dx, -dy, dy], Q = [a.x + 1, WIDTH - 2 - a.x, a.y + 1, HEIGHT - 2 - a.y];
+  for (let i = 0; i < 4; i++) {
+    if (P[i] === 0) { if (Q[i] < 0) return null; continue; }
+    const r = Q[i] / P[i];
+    if (P[i] < 0) { if (r > t1) return null; if (r > t0) t0 = r; } else { if (r < t0) return null; if (r < t1) t1 = r; }
+  }
+  return [a.x + dx * t0, a.y + dy * t0, a.x + dx * t1, a.y + dy * t1];
+}
+function drawStreaks(fb, R) {
+  if (!R.streaks) return;
+  for (const s of R.streaks) {
+    const pts = [];
+    for (let i = 0; i <= 3; i++) { const q = projStreak(R, s.z + s.len * i / 3, s.x, s.h); if (!q) { if (pts.length) break; continue; } pts.push(q); }
+    if (pts.length < 2) continue;
+    for (let i = 1; i < pts.length; i++) {
+      const c = clipSeg(pts[i - 1], pts[i]); if (!c) continue;
+      fb.line(c[0] + 1, c[1] + 1, c[2] + 1, c[3] + 1, 0);   // black shadow keeps it readable on white
+      fb.line(c[0], c[1], c[2], c[3], 1);
+    }
+  }
+}
 function renderWorld(fb, R) {
   const T = R.T, segs = T.segs, N = segs.length, theme = T.theme;
   fb.clear();
@@ -1712,6 +1749,7 @@ function renderWorld(fb, R) {
     project(seg.p1, camX - x, camY, camZ - zoff);
     project(seg.p2, camX - x - dx, camY, camZ - zoff);
     x += dx; dx += seg.curve;
+    seg.pf = R.frame;                       // projected this frame (speed lines sample it)
     if (seg.p1.c <= CAM_DEPTH) continue;
     vis.push(seg);
   }
@@ -1747,7 +1785,8 @@ function renderWorld(fb, R) {
   }
   // fog: dither band around the horizon
   if (theme.fog && !pSeg.tunnel) for (let y = skyBase - 7; y < skyBase + 10; y++) fb.hlineOrPat(0, WIDTH - 1, y, Math.round(7 * (1 - Math.abs(y - (skyBase + 1)) / 9)));
-  // player car + particles
+  // speed lines, then player car + particles
+  drawStreaks(fb, R);
   if (!R.hidePlayer) drawPlayerCar(fb, R);
   drawFX(fb, R);
 }
@@ -2062,7 +2101,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.1';
+const APP_VERSION = '0.4.2';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2230,6 +2269,7 @@ function updateFX(R, dt) {
     if (f.type === 'smoke') { f.vx *= 1 - dt * 1.5; }
   }
   R.fx = R.fx.filter(f => f.life > 0);
+  updateStreaks(R, dt);
 }
 function drawFX(fb, R) {
   for (const f of R.fx) {
@@ -2241,6 +2281,28 @@ function drawFX(fb, R) {
     else if (f.type === 'ring') fb.circle(Math.round(f.x), Math.round(f.y), Math.round(f.r + (1 - k) * 22), 1);
     else if (f.type === 'wind') { fb.line(f.x + 1, f.y, f.x + 1 - f.vx * 0.06, f.y - f.vy * 0.06, 0); fb.line(f.x, f.y, f.x - f.vx * 0.06, f.y - f.vy * 0.06, 1); }
   }
+}
+
+// speed lines live in world space: born far down the road in a tube around the camera, rushing at you
+function spawnStreak(R, boost) {
+  if (!R.streaks) R.streaks = [];
+  if (R.streaks.length > 90) R.streaks.shift();
+  const rnd = Math.random, p = R.player, a = rnd() * Math.PI * 2, rad = 500 + rnd() * 2200;
+  const h = CAM_H + Math.sin(a) * rad * 0.7;
+  if (h < 160) return;                                    // keep off the asphalt (no fake lane marks)
+  const camZ = p.z - PLAYER_Z;
+  R.streaks.push({ z: camZ + SEG_LEN * (10 + rnd() * 22), x: (p.x * ROAD_W + Math.cos(a) * rad * 1.3) / ROAD_W, h,
+    drift: MAX_SPEED * (0.35 + rnd() * 0.35) * boost, len: 0 });
+}
+function updateStreaks(R, dt) {
+  if (!R.streaks || !R.streaks.length) return;
+  const p = R.player, L = R.T.length, camZ = p.z - PLAYER_Z;
+  for (const s of R.streaks) {
+    s.z -= s.drift * dt;
+    s.len = (p.speed + s.drift) * 0.1;                   // trail = how far it moved in ~6 frames
+    s.rel = (((s.z - camZ) % L) + L) % L;
+  }
+  R.streaks = R.streaks.filter(s => s.rel > 260 && s.rel < L / 2);
 }
 
 // ---------------- damage / wreck ----------------
@@ -2449,10 +2511,7 @@ function updatePlayer(R, dt) {
   // speed lines streak out from the vanishing point: drafting, slingshot and nitro
   const windRate = sling ? 160 : nitro ? 110 : p.draft ? 50 + 70 * p.draftCharge : 0;
   let nw = windRate * dt; while (nw > 0) {
-    if (rnd() < nw) {
-      const a = rnd() * Math.PI * 2, dx = Math.cos(a), dy = Math.sin(a);
-      if (dy < 0.55) { const r0 = 6 + rnd() * 26; spawnFX(R, 'wind', KX + dx * r0 * 1.7, 27 + dy * r0, dx * 340, dy * 190, 0.22); }
-    }
+    if (rnd() < nw) spawnStreak(R, sling ? 1.5 : nitro ? 1.25 : 1);
     nw -= 1;
   }
   const vmax = MAX_SPEED * st.top * (nitro ? 1.22 : 1) * (p.draft ? 1.04 : 1) * (sling ? 1.12 : 1);
