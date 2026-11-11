@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.4 (2026-11-11)
+- New nose-up car frame for jumps, from a hand sketch: the roof outline becomes the front with headlights, a wide windshield line with mirrors, pillars opening out to a squashed rear with smaller tail lights and wheels. Shown from takeoff to the peak (the half-tilt frame is gone).
+
 ## 0.5.3 (2026-11-11)
 - Jumps: new nose-up animation. Off the ramp the car tilts half way, then fully up (seen almost from above as a trapezoid: headlights and hood far away at the top, windshield, roof, rear window, the rear face tilted down to a strip and 1 px narrower each side), then half way again and level at the peak.
 - Speed lines burst out on takeoff and streak off the bottom of the car on the way up.
