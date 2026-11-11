@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.6</title>
+<title>TopBitRacer v0.4.7</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.6</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.7</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.6</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.7</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -1928,11 +1928,11 @@ const SHOP_LIST = Object.keys(PARTS).filter(k => PARTS[k].price > 0);
 
 // Career cups. tracks are TRACKS indices.
 const CUPS = [
-  { name: 'ROOKIE CUP', short: 'ROOKIE', tracks: [5, 6, 7], fee: 0, laps: 3, add: -0.06, fine: 300, bonus: [1500, 700, 300],
+  { name: 'ROOKIE CUP', short: 'ROOKIE', tracks: [5, 6, 7], fee: 0, laps: 3, add: -0.06, fine: 100, bonus: [1500, 700, 300],
     prize: [800, 500, 300, 150, 50, 50, 50, 50] },
-  { name: 'PRO CUP', short: 'PRO', tracks: [0, 1, 2, 3, 4], fee: 1000, laps: 3, add: 0, fine: 600, bonus: [5000, 2500, 1000],
+  { name: 'PRO CUP', short: 'PRO', tracks: [0, 1, 2, 3, 4], fee: 1000, laps: 3, add: 0, fine: 300, bonus: [5000, 2500, 1000],
     prize: [3000, 2000, 1200, 700, 400, 150, 150, 150] },
-  { name: 'ELITE CUP', short: 'ELITE', tracks: [2, 4, 1, 3, 0], fee: 3000, laps: 3, add: 0.04, fine: 1000, bonus: [15000, 7000, 3000],
+  { name: 'ELITE CUP', short: 'ELITE', tracks: [2, 4, 1, 3, 0], fee: 3000, laps: 3, add: 0.04, fine: 800, bonus: [15000, 7000, 3000],
     prize: [8000, 5000, 3000, 1500, 800, 300, 300, 300] }
 ];
 const START_MONEY = 1500;
@@ -2138,7 +2138,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.6';
+const APP_VERSION = '0.4.7';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },

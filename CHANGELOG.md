@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.7 (2026-11-11)
+- Lower police fines, about 10% of the cup's winning prize: Rookie $100, Pro $300, Elite $800 (busted is still double).
+
 ## 0.4.6 (2026-11-11)
 - Rivals drive instead of just aiming at you: they read the next corners and brake before them, take the inside line, and follow the same grip rules as your car. Overcook a corner and they slide wide and scrub speed, more often on snow and rain.
 - Each rival has a skill and an aggression value: better drivers commit to the racing line and misjudge grip less; only some drivers defend their line, and never mid-corner.
