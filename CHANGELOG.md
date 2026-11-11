@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 (2026-11-10)
+- Pause menu drops the music to 10%.
+- Resuming a race starts a 3-2-1-GO countdown with the world frozen (you can rev the engine while you wait); the music fades back in on GO.
+
 ## 0.4.2 (2026-11-10)
 - Speed lines are now 3D: each one is born far down the road and rushes at the camera, projected through the track, so they bend with curves and follow hills toward the real vanishing point.
 
