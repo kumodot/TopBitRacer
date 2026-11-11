@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.3.2</title>
+<title>TopBitRacer v0.3.3</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.3.2</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.3.3</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.3.2</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.3.3</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -628,6 +628,7 @@ const SFX = {
   cash:   [{ ch: 1, dur: 0.06, freq: 1319, duty: 0.25, vol: 0.2 }, { ch: 1, at: 0.07, dur: 0.06, freq: 1568, duty: 0.25, vol: 0.2 },
            { ch: 1, at: 0.14, dur: 0.15, freq: 2093, duty: 0.25, vol: 0.2 }],
   nocash: [{ ch: 1, dur: 0.25, freq: 110, duty: 0.5, vol: 0.2 }],
+  repair: [{ ch: 1, dur: 0.05, freq: 1760, duty: 0.25, vol: 0.12 }, { ch: 1, at: 0.06, dur: 0.05, freq: 2349, duty: 0.25, vol: 0.12 }],
   scrape: [{ ch: 3, dur: 0.1, rate: 1.4, filter: 'highpass', cut: 3000, vol: 0.25, metal: true, decay: true }]
 };
 
@@ -902,7 +903,8 @@ const TREAD = {
   street: (x, y, ph) => (y & 3) === ph,                               // one stripe rolling down
   slick:  (x, y, ph) => (y & 3) === ph && (x === 0 || x === 3),       // smooth: only the shoulder marks show
   rain:   (x, y, ph) => ((y + (x >> 1)) & 3) === ph,                  // directional chevrons
-  snow:   (x, y, ph) => ((x + y + ph) & 1) === 0 && ((y + ph) & 1) === 0 // studs
+  snow:   (x, y, ph) => ((x + y + ph) & 1) === 0 && ((y + ph) & 1) === 0, // studs
+  rally:  (x, y, ph) => ((((y + ph) >> 1) + (x >> 1)) & 1) === 1           // big blocks
 };
 // opt: steer -1/0/1, lights 'idle'|'brake'|'nitro', phase, frame, broken,
 //      ride 0 low / 1 mid / 2 high, wing 0 none / 1 lip / 2 high wing, tire tread type
@@ -1159,6 +1161,7 @@ SPR.bush = makeBlob(5, 14, 7, 'mix');
 SPR.rock = makeBlob(8, 12, 8, '.'); SPR.rock.collide = true;
 SPR.snowdrift = makeBlob(13, 16, 6, '#');
 SPR.bld = [makeBuilding(3, 22, 34), makeBuilding(7, 18, 44), makeBuilding(17, 26, 28), makeBuilding(23, 20, 52)];
+SPR.pitSign = makeBillboard('PIT >'); SPR.pitSign.k = 1.6;
 SPR.bb = [makeBillboard('TOPBIT'), makeBillboard('NITRO!'), makeBillboard('TURBO'), makeBillboard('1-BIT'), makeBillboard('RACER')];
 SPR.hut = outline(parseSprite([
   '      ###      ',
@@ -1270,7 +1273,7 @@ const TRACKS = [
   },
   {
     id: 'desert', name: 'MIRAGE RUN', weather: 'DUSK', song: 'race4',
-    pieces: [[80, 0, 0], [120, 0, 40], [100, 0, -40], [80, 2, 0], [150, 0, 0], [100, -3, 30], [100, 0, -30], [60, 5, 0],
+    pieces: [[80, 0, 0], [120, 0, 40], [100, 0, -40], [80, 2, 0], [150, 0, 0], [100, -3, 30, 'd'], [100, 0, -30, 'd'], [60, 5, 0],
              [60, -5, 0], [200, 0, 0], [80, 0, 25], [80, 0, -25], [100, 3, 0], [60, 0, 0]]
   },
   {
@@ -1295,11 +1298,11 @@ const TRACKS = [
   },
   {
     id: 'hills', theme: 'country', name: 'GREEN HILLS', weather: 'SUNNY', song: 'race3', laps: 3, rookie: true,
-    pieces: [[50, 0, 0], [80, 0, 25], [80, 2, -25], [50, -3, 15], [60, 0, -15], [70, 3, 0], [60, -2, 20], [60, 0, -20], [50, 0, 0]]
+    pieces: [[50, 0, 0], [80, 0, 25], [80, 2, -25, 'd'], [50, -3, 15, 'd'], [60, 0, -15], [70, 3, 0], [60, -2, 20, 'd'], [60, 0, -20, 'd'], [50, 0, 0]]
   },
   {
     id: 'salt', theme: 'desert', name: 'SALT FLATS', weather: 'DUSK', song: 'race4', laps: 3, radar: true, rookie: true,
-    pieces: [[100, 0, 0], [60, 2, 0], [120, 0, 0], [60, -3, 0], [100, 0, 10], [50, 4, -10], [80, 0, 0]]
+    pieces: [[100, 0, 0], [60, 2, 0], [120, 0, 0], [60, -3, 0, 'd'], [100, 0, 10, 'd'], [50, 4, -10], [80, 0, 0]]
   }
 ];
 TRACKS[0].radar = true; TRACKS[1].radar = true; TRACKS[2].radar = true;   // street circuits get speed traps
@@ -1317,17 +1320,17 @@ const THEMES = {
 function buildTrack(def) {
   const segs = [];
   const lastY = () => segs.length ? segs[segs.length - 1].p2.w.y : 0;
-  const add = (curve, y, tunnel) => {
+  const add = (curve, y, flags) => {
     const n = segs.length;
     segs.push({
-      index: n, curve, tunnel: !!tunnel, sprites: [], cars: [],
+      index: n, curve, tunnel: flags.includes('t'), dirt: flags.includes('d'), pit: false, sprites: [], cars: [],
       alt: Math.floor(n / RUMBLE_LEN) % 2,
       p1: { w: { x: 0, y: lastY(), z: n * SEG_LEN }, s: {} },
       p2: { w: { x: 0, y, z: (n + 1) * SEG_LEN }, s: {} }
     });
   };
   const road = (len, curve, dy, flags = '') => {
-    const tun = flags.includes('t');
+    const tun = flags;
     const startY = lastY(), endY = startY + dy * SEG_LEN;
     let enter = Math.floor(len / 4), leave = enter, hold = len - enter - leave;
     if (!curve && !dy) { enter = 0; leave = 0; hold = len; }
@@ -1337,7 +1340,11 @@ function buildTrack(def) {
     for (let n = 0; n < leave; n++) add(ease.inOut(curve, 0, n / leave), ease.inOut(startY, endY, (enter + hold + n) / total), tun);
   };
   const pieceStarts = [];
-  for (const p of def.pieces) { const len = Math.round(p[0] * TRACK_SCALE); pieceStarts.push({ at: segs.length, len, curve: p[1], tunnel: (p[3] || '').includes('t') }); road(len, p[1], p[2], p[3]); }
+  for (const p of def.pieces) {
+    const len = Math.round(p[0] * TRACK_SCALE), f = p[3] || '';
+    pieceStarts.push({ at: segs.length, len, curve: p[1], tunnel: f.includes('t'), dirt: f.includes('d') });
+    road(len, p[1], p[2], f);
+  }
   // close the loop in height
   const ly = lastY();
   if (Math.abs(ly) > 1) road(100, 0, -ly / SEG_LEN);
@@ -1349,11 +1356,23 @@ function buildTrack(def) {
     const a = segs[(i + segs.length - 1) % segs.length], b = segs[i];
     b.comp = ((b.p2.w.y - b.p1.w.y) - (a.p2.w.y - a.p1.w.y)) / SEG_LEN;
   }
-  const T = { def, theme, segs, length: segs.length * SEG_LEN, pieceStarts, laps: def.laps || LAPS, radars: [] };
+  const T = { def, theme, segs, length: segs.length * SEG_LEN, pieceStarts, laps: def.laps || LAPS, radars: [], pitStart: -1 };
+  // pit lane (free repairs) on the right shoulder of the last plain straight, close to the finish line
+  const pitPiece = [...pieceStarts].reverse().find(p => p.curve === 0 && !p.tunnel && !p.dirt && p.len >= 60);
+  if (pitPiece) {
+    const a = pitPiece.at + 8, b = pitPiece.at + pitPiece.len - 6;
+    for (let i = a; i < b; i++) segs[i].pit = true;
+    T.pitStart = a; T.pitEnd = b;
+    segs[Math.max(0, a - 2)].sprites.push({ spr: SPR.pitSign, x: 2.1 });
+  }
+  // terrain summary for the track screens
+  T.dirtPct = Math.round(100 * segs.filter(s => s.dirt).length / segs.length);
+  const bumpy = segs.filter(s => s.comp > 0.004).length / segs.length;
+  T.bumps = bumpy > 0.03 ? 'BUMPY' : bumpy > 0.01 ? 'ROLLING' : 'FLAT';
   if (def.radar) {
     // speed traps on long straights, a parked police car on the right shoulder
     for (const p of pieceStarts) {
-      if (p.curve === 0 && !p.tunnel && p.len >= 70 && p.at > 30 && T.radars.length < 2 &&
+      if (p !== pitPiece && p.curve === 0 && !p.tunnel && !p.dirt && p.len >= 70 && p.at > 30 && T.radars.length < 2 &&
           (!T.radars.length || p.at - T.radars[T.radars.length - 1] > segs.length / 3)) {
         const at = p.at + Math.floor(p.len * 0.6);
         T.radars.push(at);
@@ -1369,7 +1388,7 @@ function buildTrack(def) {
 
 function placeSprite(T, i, spr, x, flip) {
   const s = T.segs[((i % T.segs.length) + T.segs.length) % T.segs.length];
-  if (s.tunnel) return;
+  if (s.tunnel || s.pit) return;
   if (flip) spr = spr._m || (spr._m = mirror(spr));
   s.sprites.push({ spr, x });
 }
@@ -1572,9 +1591,23 @@ function drawSegmentBand(fb, seg, theme, camY) {
     fb.hlinePat(0, WIDTH - 1, y, g);
     if (seg.tunnel) fb.hline(cx - w * TUNNEL_W, cx + w * TUNNEL_W, y, 0);
     const r = Math.max(1, w * 0.18);
+    if (seg.pit) {
+      // pit lane: asphalt on the right shoulder, dashed inner line, solid outer edge
+      fb.hline(cx + w, cx + w * 1.9, y, 0);
+      fb.setPixel(Math.round(cx + w * 1.9), y, 1);
+      if (seg.alt) fb.setPixel(Math.round(cx + w * 1.02), y, 1);
+      if ((seg.index & 7) === 0) fb.hline(cx + w * 1.1, cx + w * 1.8, y, 1);   // box markings
+    }
+    if (seg.dirt) {
+      // dirt road: light dither with two dark wheel ruts, no paint
+      fb.hlinePat(cx - w * 1.1, cx + w * 1.1, y, seg.alt ? 10 : 8);
+      const rw = Math.max(1, w * 0.1);
+      for (const k of [-0.45, 0.45]) fb.hline(cx + w * k - rw, cx + w * k + rw, y, 0);
+      continue;
+    }
     if (!seg.tunnel) {
       fb.hline(cx - w - r, cx - w, y, seg.alt ? 1 : 0);
-      fb.hline(cx + w, cx + w + r, y, seg.alt ? 1 : 0);
+      if (!seg.pit) fb.hline(cx + w, cx + w + r, y, seg.alt ? 1 : 0);
     }
     fb.hlinePat(cx - w, cx + w, y, theme.road);
     if (startLine) {
@@ -1653,6 +1686,7 @@ function renderWorld(fb, R) {
   R.camY = camY;
 
   const vis = [];
+  if (R.cop) R.cop.scr = null;
   let x = 0, dx = -(base.curve * basePct);
   const dd = theme.drawDist;
   for (let n = 0; n < dd; n++) {
@@ -1688,6 +1722,7 @@ function renderWorld(fb, R) {
       const sy = seg.p1.s.y + (seg.p2.s.y - seg.p1.s.y) * pct;
       const fr = c.steer < -0.2 ? 'l' : c.steer > 0.2 ? 'r' : 'c';
       drawSprite(fb, c.spr[fr][Math.floor(c.wheel) & 1], sx, sy + 1, sc * SPRITE_K);
+      if (c.isCop) c.scr = { x: sx, top: sy + 1 - 14 * sc * SPRITE_K, f: sc * SPRITE_K };
       if (c.nitroT > 0 && sc * SPRITE_K > 0.6 && (R.frame & 2)) { const f = sc * SPRITE_K; fb.fillCircle(Math.round(sx - 6 * f), Math.round(sy), 1, 1); fb.fillCircle(Math.round(sx + 6 * f), Math.round(sy), 1, 1); }
     }
   }
@@ -1716,7 +1751,7 @@ function drawPlayerCar(fb, R) {
   const st = p.steer < -0.3 ? -1 : p.steer > 0.3 ? 1 : 0;
   const lights = p.braking ? 'brake' : p.nitroT > 0 ? 'nitro' : 'idle';
   let jx = 0, jy = 0;
-  if (p.offroad && p.speed > 100 && Math.random() < 0.5) jy = 1;
+  if ((p.offroad || p.dirtJolt) && p.speed > 100 && Math.random() < 0.5) jy = 1;
   if (p.slip > 0.4 && (R.frame & 2)) jx = p.slipDir;
   drawSprite(fb, playerCar(st, lights, Math.floor(p.wheel) & 3, R.frame >> 2, p.damage >= 4, p.look), KX + jx, HEIGHT - jy, 1);
   if (p.nitroT > 0) {
@@ -1772,10 +1807,11 @@ const SETUP = {
 const SLOTS = [['tires', 'TIRE'], ['engine', 'ENG'], ['nitro', 'NOS'], ['chassis', 'CHAS'], ['brakes', 'BRK'], ['gadget', 'RDR']];
 // Parts catalog. price 0 = stock part (always owned, can't be sold)
 const PARTS = {
-  street: { slot: 'tires', name: 'STREET TIRES', short: 'STREET', price: 0, tread: 'street', grip: { dry: 1, wet: 1, snow: 1 }, desc: 'ALL ROUND' },
-  slick:  { slot: 'tires', name: 'SLICK TIRES', short: 'SLICK', price: 2000, tread: 'slick', grip: { dry: 1.12, wet: 0.85, snow: 0.8 }, desc: 'DRY++ WET-- SNOW--' },
-  rain:   { slot: 'tires', name: 'RAIN TIRES', short: 'RAIN', price: 1500, tread: 'rain', grip: { dry: 0.97, wet: 1.14, snow: 0.95 }, desc: 'WET++ DRY-' },
-  snowt:  { slot: 'tires', name: 'SNOW TIRES', short: 'SNOW', price: 1500, tread: 'snow', grip: { dry: 0.92, wet: 1.0, snow: 1.28 }, desc: 'SNOW+++ DRY-' },
+  street: { slot: 'tires', name: 'STREET TIRES', short: 'STREET', price: 0, tread: 'street', grip: { dry: 1, wet: 1, snow: 1 }, dirt: 0.85, desc: 'ALL ROUND' },
+  slick:  { slot: 'tires', name: 'SLICK TIRES', short: 'SLICK', price: 2000, tread: 'slick', grip: { dry: 1.12, wet: 0.85, snow: 0.8 }, dirt: 0.68, desc: 'DRY++ WET-- DIRT--' },
+  rain:   { slot: 'tires', name: 'RAIN TIRES', short: 'RAIN', price: 1500, tread: 'rain', grip: { dry: 0.97, wet: 1.14, snow: 0.95 }, dirt: 0.88, desc: 'WET++ DRY-' },
+  snowt:  { slot: 'tires', name: 'SNOW TIRES', short: 'SNOW', price: 1500, tread: 'snow', grip: { dry: 0.92, wet: 1.0, snow: 1.28 }, dirt: 0.95, desc: 'SNOW+++ DRY-' },
+  rally:  { slot: 'tires', name: 'RALLY TIRES', short: 'RALLY', price: 1500, tread: 'rally', grip: { dry: 0.95, wet: 1.02, snow: 1.08 }, dirt: 1.08, desc: 'DIRT++ DRY-' },
   eng0:   { slot: 'engine', name: 'STOCK ENGINE', short: 'STOCK', price: 0, top: 1, acc: 1, desc: '' },
   eng1:   { slot: 'engine', name: 'ENGINE STAGE 1', short: 'STG1', price: 2500, top: 1.04, acc: 1.1, desc: 'SPD+ ACC+' },
   eng2:   { slot: 'engine', name: 'ENGINE STAGE 2', short: 'STG2', price: 5000, top: 1.08, acc: 1.2, desc: 'SPD++ ACC++' },
@@ -1833,6 +1869,7 @@ function carStats(save, cond = 'dry') {
     offroad: [1.3, 1, 0.6][su],                                // speed loss multiplier off the road
     bottom: [1, 0.4, 0][su],                                   // scraping on compressions
     nitro: nos.charges, nitroTime: nos.time, hits: chs.hits, brake: brk.brake, bgrip: brk.bgrip, radar: gad.radar,
+    dirtGrip: tire.dirt || 0.85, dirtDrag: [0.24, 0.09, 0][su],   // dirt: tire grip, speed lost to the bumps by ride height
     look: { ride: su, wing: wi, tire: tire.tread }
   };
 }
@@ -1853,7 +1890,7 @@ function startCup(tier) {
   const S = G.save, cup = CUPS[tier];
   if (tier > S.unlocked) { chip.sfx('nocash'); hubMsg('WIN THE ' + CUPS[tier - 1].short + ' CUP FIRST'); return; }
   if (cup.fee > 0 && S.money < 0) { chip.sfx('nocash'); hubMsg('PAY YOUR DEBT FIRST'); return; }
-  if (S.money < cup.fee) { chip.sfx('nocash'); hubMsg('ENTRY FEE ' + fmtMoney(cup.fee)); return; }
+  if (cup.fee > 0 && S.money < cup.fee) { chip.sfx('nocash'); hubMsg('ENTRY FEE ' + fmtMoney(cup.fee)); return; }
   S.money -= cup.fee; saveGame();
   if (cup.fee) chip.sfx('cash');
   G.cup = { tier, round: 0, pts: {} };
@@ -1880,7 +1917,7 @@ function drawCareer() {
   fb.clear();
   const S = G.save;
   fb.drawSmall(1, 1, 'CAREER ' + LEVELS[G.level].name);
-  const m = S.money < 0 ? 'DEBT ' + fmtMoney(-S.money) : fmtMoney(S.money);
+  const m = S.money < 0 ? 'DEBT ' + fmtMoney(S.money) : fmtMoney(S.money);
   if (S.money >= 0 || (G.frame & 16)) fb.drawSmall(WIDTH - fb.smallWidth(m) - 1, 1, m);
   fb.hline(0, WIDTH - 1, 7, 1);
   HUB_ROWS().forEach((r, i) => {
@@ -1903,7 +1940,7 @@ function drawCareer() {
 const GARAGE_ROWS = ['susp', 'gears', 'wing', ...SLOTS.map(s => s[0])];
 function openGarage(pre) {
   const T = pre ? getTrack(G.sel) : null;
-  G.garage = { row: G.garage ? G.garage.row : 0, pre, cond: T ? T.theme.cond : 'dry', title: T ? T.def.name : 'GARAGE' };
+  G.garage = { row: G.garage ? G.garage.row : 0, pre, cond: T ? T.theme.cond : 'dry', title: T ? T.def.name : 'GARAGE', dirt: T ? T.dirtPct : 0 };
   setState('garage');
 }
 function slotOptions(slot) { return [DEFAULT_PARTS[slot], ...G.save.owned.filter(k => PARTS[k].slot === slot)]; }
@@ -1932,7 +1969,7 @@ function drawGarage() {
   drawSprite(fb, playerCar(0, 'idle', Math.floor(G.t * 5) & 3, 0, false, st.look), 31, 48, 2);
   // header
   fb.fillRect(0, 0, WIDTH, 7, 0);
-  fb.drawSmall(1, 1, g.pre ? g.title + ' ' + g.cond.toUpperCase() : 'GARAGE');
+  fb.drawSmall(1, 1, g.pre ? g.title + ' ' + g.cond.toUpperCase() + (g.dirt ? '+DIRT' : '') : 'GARAGE');
   const m = fmtMoney(S.money); fb.drawSmall(WIDTH - fb.smallWidth(m) - 1, 1, m);
   fb.hline(0, WIDTH - 1, 7, 1);
   // stat bars
@@ -2006,7 +2043,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.3.2';
+const APP_VERSION = '0.3.3';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2111,7 +2148,10 @@ function moveCar(R, c, d) {
 }
 // did a car moving from z0 to z1 (wrapped track) pass world z?
 function crossed(R, z0, z1, z) { return z1 >= z0 ? (z0 < z && z <= z1) : (z > z0 || z <= z1); }
-function msg(R, text, dur = 1.5, big = true) { R.msg = { text, t: dur * 0.7, big }; }
+// status messages: a small ticker at the top of the screen (above the road); big=true only for FINISH
+function msg(R, text, dur = 1.2, big = false) { R.msg = { text, t: big ? dur : Math.min(1.6, dur * 0.7), big }; }
+// the police talk from their car: a small outlined line above the cop sprite (falls back to the ticker)
+function copSay(R, text) { R.copSay = { text, t: 1.3 }; }
 function ordinal(n) { return n + (n === 1 ? 'ST' : n === 2 ? 'ND' : n === 3 ? 'RD' : 'TH'); }
 function fmtTime(t) { const m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); }
 
@@ -2122,7 +2162,7 @@ function onLap(R) {
     p.finished = true; p.finishTime = R.time;
     p.finalPos = 1 + R.cars.filter(c => c.finished).length;
     R.phase = 'finish'; R.finishT = 0;
-    msg(R, 'FINISH', 4);
+    msg(R, 'FINISH', 4, true);
     chip.sfx('lap');
   } else if (p.lap === R.laps) { msg(R, 'FINAL LAP', 2); chip.sfx('final'); }
   else if (p.lap > 1) { msg(R, 'LAP ' + p.lap, 1.5); chip.sfx('lap'); }
@@ -2247,7 +2287,7 @@ function updateCop(R, dt) {
   if (c.state === 'chase') {
     target = MAX_SPEED * COP_MAX;
     c.xT = p.x + (p.x > 0 ? -0.6 : 0.6);       // come up on the side
-    if (dz > -SEG_LEN * 0.4) { c.state = 'pull'; c.t = 0; msg(R, 'PULL OVER!', 2.2); }
+    if (dz > -SEG_LEN * 0.4) { c.state = 'pull'; c.t = 0; copSay(R, 'PULL OVER!'); }
     runaway();
   } else if (c.state === 'pull') {
     // sit in front at COP_GAP, in your lane; it can't beat its own top speed, so nitro can still cut past it
@@ -2258,10 +2298,10 @@ function updateCop(R, dt) {
     if (p.speed < MAX_SPEED * 0.12) { c.stopT += dt; if (c.stopT > 0.8) { chargeFine(R, R.fine, 'FINE'); c.state = 'leave'; c.t = 0; } }
     if (dz > 0 && dz < 160 && Math.abs(c.x - p.x) < 0.4 && p.speed > c.speed) {   // rear-ended the cop: bounce, and now it gets angry
       p.speed = c.speed * 0.8; moveCar(R, p, -(160 - dz)); R.shakeT = 0.25; chip.sfx('bump');
-      c.state = 'ram'; c.t = 0; msg(R, 'STOP NOW!', 1.6, false);
+      c.state = 'ram'; c.t = 0; copSay(R, 'STOP NOW!');
     }
     if (dz < -SEG_LEN * 0.3) { c.state = 'chase'; c.t = 0; c.lostT = 0; msg(R, 'GETAWAY!', 1.2, false); }   // you got past it
-    else if (c.t > 6) { c.state = 'ram'; c.t = 0; msg(R, 'STOP NOW!', 1.6, false); }
+    else if (c.t > 6) { c.state = 'ram'; c.t = 0; copSay(R, 'STOP NOW!'); }
   } else if (c.state === 'ram') {
     // drops back beside you and pushes you off the road
     target = Math.min(MAX_SPEED * COP_MAX, Math.max(0, p.speed - dz * 3));
@@ -2319,7 +2359,7 @@ function updatePlayer(R, dt) {
   const auto = R.demo || p.finished || R.demoDrive;
   const ctl = auto ? autopilot(R, p, seg)
     : { steer: (btn('left') ? -1 : 0) + (btn('right') ? 1 : 0), gas: gasHeld(), brake: brakeHeld(), nitro: hit('c') };
-  const g = p.grip, sp = p.speed / MAX_SPEED, cf = CENTRIFUGAL * (2 - g);
+  const g = p.grip * (seg.dirt ? st.dirtGrip : 1), sp = p.speed / MAX_SPEED, cf = CENTRIFUGAL * (2 - g);
   p.steer += (ctl.steer - p.steer) * Math.min(1, dt * 12 * g);
 
   // ---- grip / skid: lateral velocity chases a target, slower when the tires let go ----
@@ -2395,8 +2435,26 @@ function updatePlayer(R, dt) {
     if (sev > COMP_DAMAGE && p.scrapeCd <= 0) { addDamage(R); p.scrapeCd = 1.5; }
   } else p.scraping = false;
 
+  // ---- dirt: bumps cost speed by ride height (high = smooth), dust behind the wheels ----
+  if (seg.dirt && Math.abs(p.x) < 1.1 && sp > 0.35) {
+    p.speed -= MAX_SPEED * st.dirtDrag * sp * dt;
+    if (rnd() < dt * 20) for (const sx of [-11, 11]) spawnFX(R, 'smoke', KX + sx, 62, sx * rnd(), -6 - rnd() * 8, 0.5, 1);
+    if (st.dirtDrag > 0.1) { p.dirtJolt = true; R.scrapeT -= dt; if (R.scrapeT <= 0 && !R.demo) { chip.sfx('offroad'); R.scrapeT = 0.14; } }
+    else p.dirtJolt = false;
+  } else p.dirtJolt = false;
+
+  // ---- pit lane: free repairs on the right shoulder, with a speed limiter ----
+  p.inPit = seg.pit && p.x > 1.0 && p.x < 1.95;
+  if (p.inPit) {
+    if (p.speed > MAX_SPEED * 0.5) p.speed -= MAX_SPEED * 1.2 * dt;
+    if (p.damage > 0) {
+      p.repT = (p.repT || 0) + dt;
+      if (p.repT > 0.3) { p.repT = 0; p.damage--; chip.sfx('repair'); msg(R, p.damage ? 'PIT: REPAIRING' : 'REPAIRED!', 0.9); if (rnd() < 0.8) spawnFX(R, 'debris', KX + 12, 52, 20, -40, 0.4); }
+    }
+  }
+
   // ---- off road / obstacles ----
-  p.offroad = !seg.tunnel && Math.abs(p.x) > 1.08;
+  p.offroad = !seg.tunnel && !p.inPit && Math.abs(p.x) > 1.08;
   if (p.offroad) {
     if (p.speed > MAX_SPEED / 4) p.speed -= MAX_SPEED * 0.9 * st.offroad * dt;
     R.offT -= dt; if (R.offT <= 0 && p.speed > 200 && !R.demo) { chip.sfx('offroad'); R.offT = 0.12; }
@@ -2460,6 +2518,7 @@ function updateRivals(R, dt) {
     // rivals respect the same grip limit as the player
     const cf = CENTRIFUGAL * (2 - R.theme.grip), ac = Math.abs(seg.curve);
     if (ac > 0.5) target = Math.min(target, MAX_SPEED * Math.sqrt(0.75 * R.theme.grip / (ac * cf)));
+    if (seg.dirt) target *= 0.9;
     const gap = (progress(R, c) - progress(R, p)) / SEG_LEN;   // > 0: rival ahead of player
     if (!R.demo && !p.finished) {
       if (gap > 50) target *= LV.ahead; else if (gap < -120) target *= LV.behind;
@@ -2547,6 +2606,7 @@ function updateRace(R, dt) {
   }
   if (R.flash > 0) R.flash -= dt;
   if (R.msg) { R.msg.t -= dt; if (R.msg.t <= 0) R.msg = null; }
+  if (R.copSay) { R.copSay.t -= dt; if (R.copSay.t <= 0) R.copSay = null; }
   if (R.phase === 'finish') { R.finishT += dt; if (R.finishT > 3.5) finishRace(R); }
 }
 
@@ -2588,6 +2648,17 @@ function startIntro(trackIdx) { G.sel = trackIdx; G.race = null; setState('intro
 function startRace() { G.demo = null; G.race = newRace(G.sel, false); chip.stop(); chip.engineStart(); setState('race'); }
 
 // ---------------- HUD ----------------
+// small text with a black outline, drawn straight over the scene
+function outlinedSmall(x, y, text) {
+  for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]]) fb.drawSmall(x + ox, y + oy, text, 0);
+  fb.drawSmall(x, y, text, 1);
+}
+// top ticker: small text on a black strip, centered over the sky
+function tickerText(text, y) {
+  const w = fb.smallWidth(text);
+  fb.fillRect(KX - w / 2 - 2, y - 1, w + 4, 7, 0);
+  fb.drawSmall(Math.round(KX - w / 2), y, text);
+}
 // see-through warning sign: thick frame (white with black edges), transparent inside, text with a black outline
 function signText(text, y, sc) {
   const w = fb.textWidth(text, sc), h = 7 * sc, x = Math.round(KX - w / 2);
@@ -2658,10 +2729,24 @@ function drawHUD(R) {
     if (txt) signText(txt, 16, 3);
     for (let i = 0; i < 3; i++) { const x = KX - 12 + i * 12, on = R.cdT >= 0.5 + i; fb.fillCircle(x, 10, 3, 0); fb.circle(x, 10, 3, 1); if (on) fb.fillCircle(x, 10, 2, 1); }
   } else if (!R.demo && R.phase === 'race' && R.time < 0.6) signText('GO!', 16, 3);
-  if (R.msg && (R.msg.t > 0.4 || (R.frame & 8))) {
-    const sc = R.msg.big && R.msg.text.length <= 6 ? 2 : 1;   // only short words get the big font
-    signText(R.msg.text, sc === 2 ? 18 : 22, sc);
-    if (R.phase === 'finish' && R.msg.text === 'FINISH') { const t = ordinal(p.finalPos) + ' PLACE'; fb.fillRect(KX - fb.smallWidth(t) / 2 - 2, 35, fb.smallWidth(t) + 4, 7, 0); fb.drawSmallC(36, t); }
+  // FINISH keeps the big sign (the race is over); everything else is a small ticker at the top
+  const topBusy = (R.cop && (R.cop.state === 'chase' || R.cop.state === 'ram')) || R.radarBlink > 0 || (p.st.radar && nextRadar(R) < 45);
+  if (R.msg && R.msg.big) {
+    signText(R.msg.text, 18, 2);
+    if (R.phase === 'finish') { const t = ordinal(p.finalPos) + ' PLACE'; fb.fillRect(KX - fb.smallWidth(t) / 2 - 2, 35, fb.smallWidth(t) + 4, 7, 0); fb.drawSmallC(36, t); }
+  } else if (R.msg) tickerText(R.msg.text, topBusy ? 17 : 9);
+  // police speech above the cop car while it is on screen
+  if (R.copSay) {
+    const c = R.cop;
+    if (c && c.scr && c.scr.top > 9 && c.scr.x > 10 && c.scr.x < WIDTH - 10) {
+      const w = fb.smallWidth(R.copSay.text), x = Math.round(Math.max(1, Math.min(WIDTH - w - 1, c.scr.x - w / 2))), y = Math.round(Math.max(9, c.scr.top - 7));
+      outlinedSmall(x, y, R.copSay.text);
+    } else tickerText(R.copSay.text, topBusy ? 17 : 9);
+  }
+  // pit lane hint on the right edge while the car is damaged
+  if (p.damage > 0 && R.T.pitStart >= 0 && !p.inPit) {
+    const N = R.T.segs.length, d = (R.T.pitStart - Math.floor(p.z / SEG_LEN) % N + N) % N;
+    if (d < 70 && (R.frame & 8)) { fb.fillRect(WIDTH - 20, 26, 20, 7, 0); fb.drawSmall(WIDTH - 19, 27, 'PIT>'); }
   }
 }
 
@@ -2745,8 +2830,11 @@ function update(dt) {
 function drawTrackInfo(T, y, laps) {
   fb.drawText(2, y, T.def.name);
   fb.drawSmall(2, y + 11, T.def.weather + ' / ' + T.theme.cond.toUpperCase());
-  fb.drawSmall(2, y + 18, laps + ' LAPS');
-  if (T.radars.length) fb.drawSmall(2, y + 25, 'SPEED TRAPS');
+  fb.drawSmall(2, y + 18, laps + ' LAPS' + (T.radars.length ? ' RADAR' : ''));
+  fb.drawSmall(2, y + 25, (T.dirtPct ? 'DIRT ' + T.dirtPct + '%' : 'PAVED') + ' ' + T.bumps);
+  // what the garage should aim for
+  const tip = T.dirtPct >= 10 || T.bumps === 'BUMPY' ? 'SUSP HIGH' : T.bumps === 'FLAT' ? 'SUSP LOW' : 'SUSP MID';
+  fb.drawSmall(2, y + 32, 'TIP: ' + tip);
 }
 
 function draw() {
@@ -2785,7 +2873,6 @@ function draw() {
       fb.drawSmall(WIDTH - fb.smallWidth((G.sel + 1) + '/' + TRACKS.length) - 1, 1, (G.sel + 1) + '/' + TRACKS.length);
       fb.hline(0, WIDTH - 1, 7, 1);
       drawTrackInfo(T, 11, T.laps);
-      fb.drawSmall(2, 45, 'GRIP ' + Math.round(T.theme.grip * 100) + '%');
       drawMap(fb, T, 66, 10, 60, 44, (G.frame % 240) / 240);
       fb.drawSmall(2, 58, '< >  START');
       break;
@@ -2798,7 +2885,7 @@ function draw() {
       const m = fmtMoney(G.save.money); if (cup) fb.drawSmall(WIDTH - fb.smallWidth(m) - 1, 1, m);
       fb.hline(0, WIDTH - 1, 7, 1);
       drawTrackInfo(T, 10, cup ? cup.laps : T.laps);
-      if (cup) fb.drawSmall(2, 45, '1ST ' + fmtMoney(cup.prize[0]));
+      if (cup) fb.drawSmall(2, 49, '1ST ' + fmtMoney(cup.prize[0]));
       drawMap(fb, T, 66, 9, 60, 46, null);
       if ((G.frame >> 4) & 1) fb.drawSmall(2, 58, 'START: SETUP');
       break;

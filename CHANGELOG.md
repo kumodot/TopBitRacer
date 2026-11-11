@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3 (2026-11-10)
+- Messages moved out of the way: a small ticker at the top of the screen; only the start countdown and FINISH stay big.
+- The police talk from their car: small outlined text above the cop sprite.
+- Pit lane on every circuit: drive through the right shoulder near the finish to repair damage for free.
+- Dirt sections on Green Hills, Salt Flats and Mirage Run, new rally tires; ride height now matters (bumps cost speed with a low car).
+- Track screens show dirt %, bumpiness and a suspension tip.
+- Fix: in debt you can enter the free ROOKIE CUP again; debt shows as -$.
+
 ## 0.3.2 (2026-11-10)
 - 1-bit page chrome around the screen: pixel logo, dithered bezel, square controls, About dialog.
 - No more snow, rain, fog or lightning inside tunnels.

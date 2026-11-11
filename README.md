@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.3.2.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.3.3.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -40,7 +40,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 **Career**
 - Start with $1500. *ROOKIE CUP* (free, 3 short circuits), *PRO CUP* ($1000, 5 circuits), *ELITE CUP* ($3000, faster rivals).
 - Win a cup (most points) to unlock the next one and earn a bonus. Prize money for every finish.
-- Police fines can put you in debt: in debt only *ROOKIE* races are open until you pay it off.
+- Police fines can put you in debt (shown as *DEBT -$...*): in debt only the free *ROOKIE CUP* is open until you pay it off.
 
 **Garage** (before every race, and from the career hub)
 - *SUSP* LOW / MID / HIGH: low grips better in corners but scrapes on dips and suffers on grass; high is the opposite. The car rides lower or higher on screen.
@@ -49,11 +49,13 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 - Part slots *TIRE*, *ENG*, *NOS*, *CHAS*, *BRK*, *RDR*, with stat bars SPD ACC GRP OFF ARM BRK.
 
 **Shop**
-- Street, slick, rain and snow tires (grip per surface: dry / wet / snow), engine stages 1 to 3, nitro 4X / XL, reinforced chassis / roll cage, sport / race brakes, radar detector.
+- Street, slick, rain, snow and rally tires (grip per surface: dry / wet / snow / dirt), engine stages 1 to 3, nitro 4X / XL, reinforced chassis / roll cage, sport / race brakes, radar detector.
 - Bought parts install right away. Sell back at 50% (press A twice).
 
 **Race**
 - Auto gearbox, nitro, skids with smoke and squeal, damage (the car explodes after too many hits and you wait to respawn).
+- Pit lane on the right shoulder near the finish line: drive through it to repair damage for free (speed limited while inside). A *PIT>* hint blinks when you are damaged and it is coming up.
+- Dirt sections (Green Hills, Salt Flats, Mirage Run): bumps cost speed with a low ride, rally tires grip best. The track screen shows *DIRT %*, how bumpy it is and a suspension tip.
 - Slipstream: sit behind a car to charge the draft, pull out sideways for a slingshot.
 - Speed traps on street circuits: pass above 176 km/h and a cop chases you. Stop and pay the fine, or cut past it with nitro and leave it 12 segments behind to get away. Ignore it and it rams you off the road.
 - Levels EASY / NORMAL / HARD, 8 circuits: Sun Coast, Mirage Run, Neon Metro (tunnels), Frost Peak (snow), Storm Woods (rain, fog, lightning), Bay Street, Green Hills, Salt Flats.
@@ -75,7 +77,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.3.2.html    the game (single file)
+TopBitRacer_v0.3.3.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE
