@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.5.5.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.5.6.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -81,7 +81,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.5.5.html    the game (single file)
+TopBitRacer_v0.5.6.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE

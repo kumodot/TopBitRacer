@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.5.5</title>
+<title>TopBitRacer v0.5.6</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.5.5</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.5.6</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.5.5</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.5.6</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -1626,12 +1626,12 @@ function buildSky(type) {
 // time of day, weather, a forecast change during the race, where the dirt is, puddles
 // ============================================================================
 const ENV_TABLE = {
-  coast:   { time: [['DAY', 0.6], ['DUSK', 0.25], ['NIGHT', 0.15]], sky: [['CLEAR', 0.55], ['FOG', 0.15], ['RAIN', 0.2], ['STORM', 0.1]] },
-  desert:  { time: [['DAY', 0.35], ['DUSK', 0.45], ['NIGHT', 0.2]], sky: [['CLEAR', 0.75], ['FOG', 0.1], ['RAIN', 0.1], ['STORM', 0.05]] },
-  metro:   { time: [['DUSK', 0.3], ['NIGHT', 0.7]], sky: [['CLEAR', 0.5], ['FOG', 0.15], ['RAIN', 0.25], ['STORM', 0.1]] },
-  alpine:  { time: [['DAY', 0.55], ['DUSK', 0.25], ['NIGHT', 0.2]], sky: [['CLEAR', 0.35], ['FOG', 0.2], ['SNOW', 0.45]] },
-  woods:   { time: [['DAY', 0.5], ['DUSK', 0.3], ['NIGHT', 0.2]], sky: [['FOG', 0.25], ['RAIN', 0.4], ['STORM', 0.35]] },
-  country: { time: [['DAY', 0.6], ['DUSK', 0.25], ['NIGHT', 0.15]], sky: [['CLEAR', 0.55], ['FOG', 0.2], ['RAIN', 0.25]] }
+  coast:   { time: [['DAY', 0.6], ['DUSK', 0.25], ['NIGHT', 0.15]], sky: [['CLEAR', 0.76], ['FOG', 0.06], ['RAIN', 0.13], ['STORM', 0.05]] },
+  desert:  { time: [['DAY', 0.35], ['DUSK', 0.45], ['NIGHT', 0.2]], sky: [['CLEAR', 0.88], ['FOG', 0.04], ['RAIN', 0.06], ['STORM', 0.02]] },
+  metro:   { time: [['DUSK', 0.3], ['NIGHT', 0.7]], sky: [['CLEAR', 0.72], ['FOG', 0.06], ['RAIN', 0.16], ['STORM', 0.06]] },
+  alpine:  { time: [['DAY', 0.55], ['DUSK', 0.25], ['NIGHT', 0.2]], sky: [['CLEAR', 0.5], ['FOG', 0.1], ['SNOW', 0.4]] },
+  woods:   { time: [['DAY', 0.5], ['DUSK', 0.3], ['NIGHT', 0.2]], sky: [['CLEAR', 0.1], ['FOG', 0.15], ['RAIN', 0.45], ['STORM', 0.3]] },
+  country: { time: [['DAY', 0.6], ['DUSK', 0.25], ['NIGHT', 0.15]], sky: [['CLEAR', 0.76], ['FOG', 0.07], ['RAIN', 0.17]] }
 };
 // chance that a paved piece turns to dirt this race (original dirt pieces stay dirt most of the time)
 const DIRT_EXTRA = { coast: 0.05, desert: 0.14, metro: 0, alpine: 0.08, woods: 0.12, country: 0.12 };
@@ -1643,7 +1643,7 @@ const WEATHER = {
   STORM: { wet: 1, fog: 0.5, precip: 1 },
   SNOW:  { wet: 0, fog: 0.35, precip: 1 }
 };
-const CHANGES = { CLEAR: ['RAIN', 'FOG'], FOG: ['CLEAR', 'RAIN'], RAIN: ['CLEAR', 'STORM'], STORM: ['RAIN', 'CLEAR'], SNOW: ['CLEAR'] };
+const CHANGES = { CLEAR: ['RAIN', 'RAIN', 'FOG'], FOG: ['CLEAR', 'RAIN'], RAIN: ['CLEAR', 'STORM'], STORM: ['RAIN', 'CLEAR'], SNOW: ['CLEAR'] };
 const CHANGE_MSG = { CLEAR: 'SKIES CLEARING', FOG: 'FOG ROLLING IN', RAIN: 'RAIN STARTING', STORM: 'STORM COMING', SNOW: 'SNOW FALLING' };
 const pickW = (list) => { let r = Math.random(), a = 0; for (const [k, w] of list) { a += w; if (r < a) return k; } return list[list.length - 1][0]; };
 const envId = (T) => T.def.theme || T.def.id;
@@ -1652,11 +1652,11 @@ function rollEnv(T, laps) {
   const id = envId(T), tab = ENV_TABLE[id], rnd = Math.random;
   const env = { time: pickW(tab.time), weather: pickW(tab.sky), snowRoad: id === 'alpine', forecast: null, event: null };
   // forecast: a change some time after lap 1 (it doesn't always come); now and then a surprise nobody announced
-  const opts = id === 'alpine' ? (env.weather === 'SNOW' ? ['CLEAR'] : ['SNOW']) : id === 'desert' && env.weather === 'CLEAR' ? ['FOG'] : CHANGES[env.weather];
+  const opts = id === 'alpine' ? (env.weather === 'SNOW' ? ['CLEAR'] : ['SNOW']) : id === 'desert' && env.weather === 'CLEAR' ? ['FOG', 'RAIN'] : CHANGES[env.weather];
   const to = opts[Math.floor(rnd() * opts.length)];
   const ev = () => ({ to, lap: Math.min(laps, 2 + (rnd() < 0.5 ? 0 : 1)), frac: rnd() * 0.7, done: false });
-  if (rnd() < 0.35) { env.forecast = to; if (rnd() < 0.8) env.event = ev(); }
-  else if (rnd() < 0.08) env.event = ev();
+  if (rnd() < 0.17) { env.forecast = to; if (rnd() < 0.8) env.event = ev(); }
+  else if (rnd() < 0.04) env.event = ev();
   // dirt layout: some paved pieces turn to dirt, some dirt pieces get paved over (never tunnels, pit or speed traps)
   env.dirt = T.pieceStarts.map(p => {
     if (p.tunnel || p.fixed) return false;
@@ -2375,7 +2375,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.5.5';
+const APP_VERSION = '0.5.6';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },

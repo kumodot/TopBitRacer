@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.6 (2026-11-11)
+- Weather balance: rain and fog are rarer. On the rookie tracks a race now has rain about 1 in 4 times (was ~2 in 5) and fog about 1 in 10 (was ~1 in 4); mid-race changes happen about 1 in 6 races (was 1 in 3). STORM WOODS keeps its stormy character.
+
 ## 0.5.5 (2026-11-11)
 - Nose-up jump frame follows the car setup: the tall wing shows as a plank across the trunk with its posts, the lip spoiler as a thick trunk edge, and low suspension now hides a tire row (high shows the gap, as before).
 
