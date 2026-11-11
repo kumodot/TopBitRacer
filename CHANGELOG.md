@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 (2026-11-11)
+- Race conditions rolled for every race on the same layout: time of day (day, dusk with a big low sun, night with stars, moon and darker ground), weather (clear, fog, rain, storm, snow on the alpine track), dirt sections that move around, puddles on wet roads.
+- Forecast on the track screen (*LATER: RAIN?*) and weather that can change mid race (rain starting, skies clearing, fog rolling in, snow falling), announced on the ticker. The road soaks fast and dries slowly; grip follows it, for you and for the rivals, and depends on your tires.
+- Puddles: drag, a twitch of the wheel and a spray of water; rivals slow down in them too.
+- Fog shortens the view; rain, storm and thick fog cover the sun, moon and stars.
+- Garage before a race uses the rolled conditions (dry / wet / snow) for the tire stats.
+
 ## 0.4.9 (2026-11-11)
 - FIRST! is now a small ticker message like the others (the jingle still plays).
 - Wanted level shown as asterisks and dashes (`* - -`, `* * -`, `* * *`) instead of hollow stars.

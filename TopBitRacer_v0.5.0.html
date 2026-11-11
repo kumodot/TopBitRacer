@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.9</title>
+<title>TopBitRacer v0.5.0</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.9</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.5.0</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.9</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.5.0</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -640,6 +640,7 @@ const SFX = {
            { ch: 0, at: 0.21, dur: 0.3, freq: 1568, duty: 0.5, vol: 0.12, decay: true }],
   star:   [{ ch: 0, dur: 0.07, freq: 880, duty: 0.5, vol: 0.14 }, { ch: 0, at: 0.08, dur: 0.07, freq: 660, duty: 0.5, vol: 0.14 },
            { ch: 0, at: 0.16, dur: 0.12, freq: 880, duty: 0.5, vol: 0.14 }],
+  splash: [{ ch: 3, dur: 0.25, rate: 0.7, rateTo: 0.3, filter: 'bandpass', cut: 2200, cutTo: 900, vol: 0.35, decay: true }],
   pass:   [{ ch: 1, dur: 0.05, freq: 1200, duty: 0.125, vol: 0.12 }],
   thunder:[{ ch: 3, dur: 1.6, rate: 0.25, rateTo: 0.06, filter: 'lowpass', cut: 900, cutTo: 120, vol: 0.8, decay: true }],
   skid:   [{ ch: 3, dur: 0.12, rate: 1, filter: 'bandpass', cut: 2500, vol: 0.18, metal: true, decay: true }],
@@ -1416,6 +1417,7 @@ function buildTrack(def) {
   // pit lane (free repairs) on the right shoulder of the last plain straight, close to the finish line
   const pitPiece = [...pieceStarts].reverse().find(p => p.curve === 0 && !p.tunnel && !p.dirt && p.len >= 60);
   if (pitPiece) {
+    pitPiece.fixed = true;                       // conditions never put dirt on the pit straight
     const a = pitPiece.at + 8, b = pitPiece.at + pitPiece.len - 6;
     for (let i = a; i < b; i++) segs[i].pit = true;
     T.pitStart = a; T.pitEnd = b;
@@ -1431,6 +1433,7 @@ function buildTrack(def) {
       if (p !== pitPiece && p.curve === 0 && !p.tunnel && !p.dirt && p.len >= 70 && p.at > 30 && T.radars.length < 2 &&
           (!T.radars.length || p.at - T.radars[T.radars.length - 1] > segs.length / 3)) {
         const at = p.at + Math.floor(p.len * 0.6);
+        p.fixed = true;
         T.radars.push(at);
         segs[at].sprites.push({ spr: SPR_COP_SIDE[0], anim: SPR_COP_SIDE, x: 1.7, radar: T.radars.length - 1 });
         segs[at - 40].sprites.push({ spr: SPR.limitSign, x: 1.35 });
@@ -1546,6 +1549,116 @@ function buildSky(type) {
     layer(0.4, 4, h => { for (let x = 0; x < L; x++) h[x] = Math.round(3 + Math.abs(Math.sin(x * 0.45)) * 3 + Math.sin(x * 0.08) * 1.5); }, { outline: true });
   }
   return sky;
+}
+
+// ============================================================================
+// RACE CONDITIONS: rolled for every race on the same layout
+// time of day, weather, a forecast change during the race, where the dirt is, puddles
+// ============================================================================
+const ENV_TABLE = {
+  coast:   { time: [['DAY', 0.6], ['DUSK', 0.25], ['NIGHT', 0.15]], sky: [['CLEAR', 0.55], ['FOG', 0.15], ['RAIN', 0.2], ['STORM', 0.1]] },
+  desert:  { time: [['DAY', 0.35], ['DUSK', 0.45], ['NIGHT', 0.2]], sky: [['CLEAR', 0.75], ['FOG', 0.1], ['RAIN', 0.1], ['STORM', 0.05]] },
+  metro:   { time: [['DUSK', 0.3], ['NIGHT', 0.7]], sky: [['CLEAR', 0.5], ['FOG', 0.15], ['RAIN', 0.25], ['STORM', 0.1]] },
+  alpine:  { time: [['DAY', 0.55], ['DUSK', 0.25], ['NIGHT', 0.2]], sky: [['CLEAR', 0.35], ['FOG', 0.2], ['SNOW', 0.45]] },
+  woods:   { time: [['DAY', 0.5], ['DUSK', 0.3], ['NIGHT', 0.2]], sky: [['FOG', 0.25], ['RAIN', 0.4], ['STORM', 0.35]] },
+  country: { time: [['DAY', 0.6], ['DUSK', 0.25], ['NIGHT', 0.15]], sky: [['CLEAR', 0.55], ['FOG', 0.2], ['RAIN', 0.25]] }
+};
+// chance that a paved piece turns to dirt this race (original dirt pieces stay dirt most of the time)
+const DIRT_EXTRA = { coast: 0.05, desert: 0.14, metro: 0, alpine: 0.08, woods: 0.12, country: 0.12 };
+// what each weather does: surface water, fog, precipitation
+const WEATHER = {
+  CLEAR: { wet: 0, fog: 0, precip: 0 },
+  FOG:   { wet: 0.3, fog: 1, precip: 0 },
+  RAIN:  { wet: 1, fog: 0.25, precip: 1 },
+  STORM: { wet: 1, fog: 0.5, precip: 1 },
+  SNOW:  { wet: 0, fog: 0.35, precip: 1 }
+};
+const CHANGES = { CLEAR: ['RAIN', 'FOG'], FOG: ['CLEAR', 'RAIN'], RAIN: ['CLEAR', 'STORM'], STORM: ['RAIN', 'CLEAR'], SNOW: ['CLEAR'] };
+const CHANGE_MSG = { CLEAR: 'SKIES CLEARING', FOG: 'FOG ROLLING IN', RAIN: 'RAIN STARTING', STORM: 'STORM COMING', SNOW: 'SNOW FALLING' };
+const pickW = (list) => { let r = Math.random(), a = 0; for (const [k, w] of list) { a += w; if (r < a) return k; } return list[list.length - 1][0]; };
+const envId = (T) => T.def.theme || T.def.id;
+
+function rollEnv(T, laps) {
+  const id = envId(T), tab = ENV_TABLE[id], rnd = Math.random;
+  const env = { time: pickW(tab.time), weather: pickW(tab.sky), snowRoad: id === 'alpine', forecast: null, event: null };
+  // forecast: a change some time after lap 1 (it doesn't always come); now and then a surprise nobody announced
+  const opts = id === 'alpine' ? (env.weather === 'SNOW' ? ['CLEAR'] : ['SNOW']) : id === 'desert' && env.weather === 'CLEAR' ? ['FOG'] : CHANGES[env.weather];
+  const to = opts[Math.floor(rnd() * opts.length)];
+  const ev = () => ({ to, lap: Math.min(laps, 2 + (rnd() < 0.5 ? 0 : 1)), frac: rnd() * 0.7, done: false });
+  if (rnd() < 0.35) { env.forecast = to; if (rnd() < 0.8) env.event = ev(); }
+  else if (rnd() < 0.08) env.event = ev();
+  // dirt layout: some paved pieces turn to dirt, some dirt pieces get paved over (never tunnels, pit or speed traps)
+  env.dirt = T.pieceStarts.map(p => {
+    if (p.tunnel || p.fixed) return false;
+    return p.dirt ? rnd() < 0.8 : rnd() < (DIRT_EXTRA[id] || 0);
+  });
+  // puddles (only matter when the road is wet): [segment, x center, half width]
+  env.puddles = [];
+  if (id !== 'alpine') for (let i = 0; i < 14; i++) {
+    const s = 30 + Math.floor(rnd() * (T.segs.length - 40));
+    if (!T.segs[s].tunnel && !T.segs[s].pit) env.puddles.push([s, (rnd() * 2 - 1) * 0.6, 0.18 + rnd() * 0.2, 3 + Math.floor(rnd() * 4)]);
+  }
+  return env;
+}
+const envCond = (env, wet) => env.snowRoad ? 'snow' : (wet != null ? wet : WEATHER[env.weather].wet) > 0.5 ? 'wet' : 'dry';
+
+// lay this race's dirt and puddles onto the (shared, cached) track
+function applyEnvTrack(T, env) {
+  T.pieceStarts.forEach((p, k) => { for (let i = p.at; i < p.at + p.len && i < T.segs.length; i++) T.segs[i].dirt = env.dirt[k] && !T.segs[i].pit; });
+  for (const s of T.segs) s.puddle = null;
+  for (const [s, x, w, n] of env.puddles) for (let i = 0; i < n; i++) { const seg = T.segs[(s + i) % T.segs.length]; if (!seg.dirt && !seg.tunnel) seg.puddle = { x, w }; }
+  T.dirtPct = Math.round(100 * T.segs.filter(s => s.dirt).length / T.segs.length);
+}
+
+// sky for this time of day (built from the theme's skyline)
+function envSky(theme, env) {
+  const sky = buildSky(theme.sky), L = 512, R = rng(env.time.length * 31 + theme.sky.length);
+  if (env.time === 'NIGHT' && theme.sky !== 'metro') {
+    sky.sun = null; sky.clouds = sky.clouds.slice(0, 2);
+    for (let i = 0; i < 36; i++) sky.stars.push({ x: R() * L, y: 4 + R() * (HORIZON - 12) });
+    sky.moon = { x: 150, y: 11, r: 4 };
+  } else if (env.time === 'DUSK') {
+    sky.sun = { x: 64, y: HORIZON - 1, r: 12, stripes: true }; sky.moon = null; sky.stars = sky.stars.slice(0, 8);
+  } else if (env.time === 'DAY' && theme.sky === 'desert') sky.sun = { x: 64, y: 12, r: 5 };
+  // overcast version (rain, storm, thick fog): no sun, moon or stars, more clouds
+  sky.over = { ...sky, sun: null, moon: null, stars: [], clouds: [...sky.clouds] };
+  for (let i = 0; i < 8; i++) sky.over.clouds.push({ x: R() * L, y: 8 + R() * 8, w: 10 + R() * 14 });
+  return sky;
+}
+
+// runtime: conditions move towards the current weather, the forecast change kicks in on its lap
+function envStart(R, env) {
+  const w = WEATHER[env.weather];
+  R.env = { ...env, cur: { ...w }, pkind: env.weather === 'SNOW' ? 'snow' : 'rain' };
+  if (env.snowRoad) R.env.cur.wet = 0;
+  const night = env.time === 'NIGHT';
+  R.theme = { ...R.T.theme, ground: night ? R.T.theme.ground.map(v => Math.max(0, Math.round(v * 0.5))) : R.T.theme.ground };
+  updateEnvGrip(R);
+}
+function updateEnvGrip(R) {
+  const e = R.env, p = R.player;
+  R.envGrip = e.snowRoad ? 0.72 : 1 - 0.15 * e.cur.wet;
+  R.cond = envCond(e, e.cur.wet);
+  R.theme.wetK = e.cur.wet;
+  if (p.st) {
+    const t = PARTS[(R.demo ? DEFAULT_PARTS : G.save.parts).tires] || PARTS.street;
+    const tg = e.snowRoad ? t.grip.snow : t.grip.dry + (t.grip.wet - t.grip.dry) * e.cur.wet;
+    p.grip = R.envGrip * tg;
+  }
+}
+function updateEnv(R, dt) {
+  const e = R.env, p = R.player;
+  const ev = e.event;
+  if (ev && !ev.done && !R.demo && R.phase === 'race' && p.lap >= ev.lap && (p.z / R.T.length) >= ev.frac) {
+    ev.done = true; e.weather = ev.to;
+    if (WEATHER[ev.to].precip) e.pkind = ev.to === 'SNOW' ? 'snow' : 'rain';
+    msg(R, CHANGE_MSG[ev.to], 2.2); chip.sfx('radar');
+  }
+  const tg = WEATHER[e.weather], c = e.cur;
+  const toward = (k, up, down) => { const d = tg[k] - c[k]; c[k] += Math.max(-down * dt, Math.min(up * dt, d)); };
+  toward('precip', 0.3, 0.4); toward('fog', 0.12, 0.1);
+  if (!e.snowRoad) toward('wet', 1 / 14, 1 / 30);   // the road soaks fast and dries slowly
+  updateEnvGrip(R);
 }
 
 // ============================================================================
@@ -1674,6 +1787,11 @@ function drawSegmentBand(fb, seg, theme, camY) {
       const lw = Math.max(1, w * 0.035);
       for (let k = 1; k < LANES; k++) { const lx = cx - w + (2 * w * k) / LANES; fb.hline(lx - lw / 2, lx + lw / 2, y, 1); }
     }
+    // puddles on a wet road: a shimmering patch
+    if (seg.puddle && theme.wetK > 0.35 && ((y + seg.index) & 1)) {
+      const px = cx + seg.puddle.x * w, pw = seg.puddle.w * w * Math.min(1, theme.wetK * 1.4);
+      fb.hlinePat(px - pw, px + pw, y, 6);
+    }
     if (theme.edge || seg.tunnel) { fb.setPixel(Math.round(cx - w), y, 1); fb.setPixel(Math.round(cx + w), y, 1); }
   }
 }
@@ -1768,7 +1886,8 @@ function drawStreaks(fb, R) {
   }
 }
 function renderWorld(fb, R) {
-  const T = R.T, segs = T.segs, N = segs.length, theme = T.theme;
+  const T = R.T, segs = T.segs, N = segs.length, theme = R.theme || T.theme, env = R.env;
+  const fogK = env ? env.cur.fog : theme.fog ? 1 : 0;
   fb.clear();
   const pz = R.player.z;
   let camZ = pz - PLAYER_Z; if (camZ < 0) camZ += T.length;
@@ -1781,7 +1900,7 @@ function renderWorld(fb, R) {
   const vis = [];
   if (R.cop) R.cop.scr = null;
   let x = 0, dx = -(base.curve * basePct);
-  const dd = theme.drawDist;
+  const dd = Math.round(theme.drawDist + (Math.min(theme.drawDist, 62) - theme.drawDist) * fogK);   // fog shortens the view
   for (let n = 0; n < dd; n++) {
     const seg = segs[(base.index + n) % N];
     const zoff = seg.index < base.index ? T.length : 0;
@@ -1796,7 +1915,8 @@ function renderWorld(fb, R) {
   let minY = HORIZON;
   for (const seg of vis) if (!seg.tunnel) minY = Math.min(minY, seg.p2.s.y);
   const skyBase = Math.max(9, Math.round(minY));
-  drawSky(fb, R.sky, R.bgOff, theme, skyBase);
+  const overcast = env && (env.cur.precip > 0.5 || env.cur.fog > 0.7);
+  drawSky(fb, overcast && R.sky.over ? R.sky.over : R.sky, R.bgOff, theme, skyBase);
   for (let y = skyBase; y < HEIGHT; y++) fb.hlinePat(0, WIDTH - 1, y, theme.ground[1]);
   const mountain = theme.sky === 'alpine' || theme.sky === 'woods';
   for (let i = vis.length - 1; i >= 0; i--) {
@@ -1823,7 +1943,7 @@ function renderWorld(fb, R) {
     }
   }
   // fog: dither band around the horizon
-  if (theme.fog && !pSeg.tunnel) for (let y = skyBase - 7; y < skyBase + 10; y++) fb.hlineOrPat(0, WIDTH - 1, y, Math.round(7 * (1 - Math.abs(y - (skyBase + 1)) / 9)));
+  if (fogK > 0.05 && !pSeg.tunnel) for (let y = skyBase - 7; y < skyBase + 10; y++) fb.hlineOrPat(0, WIDTH - 1, y, Math.round(7 * fogK * (1 - Math.abs(y - (skyBase + 1)) / 9)));
   // speed lines, then player car + particles
   drawStreaks(fb, R);
   if (!R.hidePlayer) drawPlayerCar(fb, R);
@@ -1859,19 +1979,22 @@ function drawPlayerCar(fb, R) {
 
 function inTunnel(R) { const s = R.T.segs; return s[Math.floor(R.player.z / SEG_LEN) % s.length].tunnel; }
 function drawWeather(fb, R) {
-  const th = R.T.theme;
+  const e = R.env; if (!e || e.cur.precip < 0.02) return;
   if (inTunnel(R)) return;                       // no snow or rain under a roof
-  for (const f of R.particles) {
-    if (th.snow) { fb.setPixel(f.x, f.y, 1); if (f.big) fb.setPixel(f.x + 1, f.y, 1); }
-    else if (th.rain) fb.line(f.x, f.y, f.x - 1, f.y + 3, 1);
+  const snow = e.pkind === 'snow', n = Math.round(R.particles.length * e.cur.precip);
+  for (let i = 0; i < n; i++) {
+    const f = R.particles[i];
+    if (snow) { fb.setPixel(f.x, f.y, 1); if (f.big) fb.setPixel(f.x + 1, f.y, 1); }
+    else fb.line(f.x, f.y, f.x - 1, f.y + 3, 1);
   }
 }
 function updateWeather(R, dt) {
-  const th = R.T.theme; if (!th.snow && !th.rain) return;
+  const e = R.env; if (!e || e.cur.precip < 0.02) return;
+  const snow = e.pkind === 'snow';
   const sp = R.player.speed / MAX_SPEED, curve = R.curveNow || 0;
-  if (!R.particles.length) for (let i = 0; i < (th.snow ? 45 : 30); i++) R.particles.push({ x: Math.random() * WIDTH, y: Math.random() * HEIGHT, v: 0.5 + Math.random(), big: Math.random() < 0.25 });
+  if (!R.particles.length) for (let i = 0; i < 45; i++) R.particles.push({ x: Math.random() * WIDTH, y: Math.random() * HEIGHT, v: 0.5 + Math.random(), big: Math.random() < 0.25 });
   for (const f of R.particles) {
-    if (th.snow) { f.y += (18 + 40 * sp) * f.v * dt; f.x += (-curve * sp * 30 + Math.sin(f.y * 0.2) * 6 - R.player.steer * sp * 20) * dt * f.v; }
+    if (snow) { f.y += (18 + 40 * sp) * f.v * dt; f.x += (-curve * sp * 30 + Math.sin(f.y * 0.2) * 6 - R.player.steer * sp * 20) * dt * f.v; }
     else { f.y += (110 + 60 * sp) * f.v * dt; f.x -= (20 + curve * sp * 25) * dt; }
     if (f.y > HEIGHT) { f.y = -3; f.x = Math.random() * WIDTH; }
     if (f.x < -2) f.x += WIDTH + 2; else if (f.x > WIDTH + 2) f.x -= WIDTH + 2;
@@ -2037,7 +2160,7 @@ function drawCareer() {
 const GARAGE_ROWS = ['susp', 'gears', 'wing', ...SLOTS.map(s => s[0])];
 function openGarage(pre) {
   const T = pre ? getTrack(G.sel) : null;
-  G.garage = { row: G.garage ? G.garage.row : 0, pre, cond: T ? T.theme.cond : 'dry', title: T ? T.def.name : 'GARAGE', dirt: T ? T.dirtPct : 0 };
+  G.garage = { row: G.garage ? G.garage.row : 0, pre, cond: T ? (G.nextEnv ? envCond(G.nextEnv) : T.theme.cond) : 'dry', title: T ? T.def.name : 'GARAGE', dirt: T ? T.dirtPct : 0 };
   setState('garage');
 }
 function slotOptions(slot) { return [DEFAULT_PARTS[slot], ...G.save.owned.filter(k => PARTS[k].slot === slot)]; }
@@ -2140,7 +2263,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.9';
+const APP_VERSION = '0.5.0';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2201,10 +2324,14 @@ function music(id) { if (chip.ctx) chip.play(id); }
 function newRace(trackIdx, demo) {
   const T = getTrack(trackIdx), L = T.length, theme = T.theme;
   T.segs.forEach(s => (s.cars.length = 0));
+  // conditions: the ones shown on the track screen, or a fresh roll (demo / free race shortcut)
+  const env = !demo && G.nextEnv && G.nextEnv.track === trackIdx ? G.nextEnv : rollEnv(T, T.laps);
+  if (!demo) G.nextEnv = null;
+  applyEnvTrack(T, env);
   const startZ = L - 2 * SEG_LEN;
   const LV = LEVELS[demo ? 1 : G.level];
   const cup = !demo && G.mode === 'career' && G.cup ? CUPS[G.cup.tier] : null;
-  const st = carStats(demo ? newSave() : G.save, theme.cond);
+  const st = carStats(demo ? newSave() : G.save, envCond(env));
   const player = { name: 'YOU', isPlayer: true, z: startZ, x: 0.45, speed: 0, lap: 0, gear: 1, rpm: 0, nitro: st.nitro, nitroT: 0, steer: 0,
                    offroad: false, braking: false, finished: false, finishTime: 0, crashT: 0, segI: -1,
                    vx: 0, slip: 0, slipDir: 0, wheel: 0, damage: 0, wrecked: false, wreckT: 0, respawned: false,
@@ -2221,7 +2348,7 @@ function newRace(trackIdx, demo) {
                 skill: 0.78 + 0.22 * (0.5 * i / 6 + 0.5 * Math.random()), aggr: Math.random(), judge: 0, judgeT: 0, slip: 0, laneT: 0,
                 wheel: Math.random() * 4, nitro: LV.nitro, nitroT: 0, blockT: 0, blockCd: 3 + Math.random() * 4, bustT: 0 });
   }
-  const R = { T, sky: buildSky(theme.sky), theme, player, cars, all: [...cars, player], bgOff: 0, shakeX: 0, shakeT: 0, frame: 0, time: 0,
+  const R = { T, sky: envSky(theme, env), theme, player, cars, all: [...cars, player], bgOff: 0, shakeX: 0, shakeT: 0, frame: 0, time: 0,
               phase: demo ? 'race' : 'countdown', cdT: 0, msg: null, particles: [], flash: 0, thunderT: 5 + Math.random() * 6,
               demo, finishT: 0, trackIdx, pos: 8, lastPos: 8, offT: 0, wallT: 0,
               level: LV, fx: [], dmgShow: 0, squealT: 0, laps: cup ? cup.laps : T.laps, cup,
@@ -2229,6 +2356,7 @@ function newRace(trackIdx, demo) {
   T.segs.forEach(sg => sg.sprites.forEach(sp => { sp.knockT = 0; }));
   rollRadars(R);
   placeCars(R);
+  envStart(R, env);
   return R;
 }
 // each lap every speed trap is manned with 60% chance (the parked car is only there when it is)
@@ -2691,6 +2819,16 @@ function updatePlayer(R, dt) {
     if (crossed(R, z0, p.z, rz * SEG_LEN) && R.radarOn[i] && !R.cop && p.speed > MAX_SPEED * SPEED_LIMIT && rnd() < 0.7) startChase(R);
   });
 
+  // ---- puddles on a wet road: drag, a twitch of the wheel and a spray of water ----
+  const pud = seg.puddle;
+  if (pud && R.env.cur.wet > 0.35 && Math.abs(p.x - pud.x) < pud.w + 0.12 && sp > 0.25 && !p.wrecked) {
+    p.speed -= MAX_SPEED * 0.3 * dt;
+    p.vx += (rnd() * 2 - 1) * 5 * sp * dt;
+    if (rnd() < dt * 30) for (const sx of [-10, 10]) spawnFX(R, 'debris', KX + sx, 58, sx * (2 + rnd() * 3), -40 - rnd() * 40, 0.4);
+    R.splashT = (R.splashT || 0) - dt;
+    if (R.splashT <= 0 && !R.demo) { chip.sfx('splash'); R.splashT = 0.35; }
+  }
+
   // ---- damage smoke ----
   if (p.damage >= 3 && rnd() < dt * (p.damage >= p.st.hits - 1 ? 14 : 7)) spawnFX(R, 'smoke', KX + rnd() * 8 - 4, 49, -seg.curve * sp * 6 + (rnd() * 2 - 1) * 4, -16 - rnd() * 8, 0.9, 1);
 
@@ -2724,11 +2862,11 @@ function updateRivals(R, dt) {
     }
     if (c.nitroT > 0) { c.nitroT -= dt; target *= 1.16; }
     // ---- read the road like a driver: same grip rules as the player, brake BEFORE the corner ----
-    const g = R.theme.grip * (seg.dirt ? 0.82 : 1), cf = CENTRIFUGAL * (2 - R.theme.grip), sp = c.speed / MAX_SPEED;
+    const g = R.envGrip * (seg.dirt ? 0.82 : 1), cf = CENTRIFUGAL * (2 - R.envGrip), sp = c.speed / MAX_SPEED;
     c.judgeT -= dt;
     if (c.judgeT <= 0) {                     // every few seconds the driver reads the grip a bit right or wrong (worse on snow / rain)
       c.judgeT = 2 + Math.random() * 2.5;
-      c.judge = (Math.random() * 2 - 0.8) * (1 - c.skill) * (1.7 - R.theme.grip) * 0.55;
+      c.judge = (Math.random() * 2 - 0.8) * (1 - c.skill) * (1.7 - R.envGrip) * 0.55;
     }
     const trueLim = RIVAL_GRIP * g;
     const lim = trueLim * (0.94 + 0.06 * c.skill + c.judge);   // what this driver thinks the car can take
@@ -2741,6 +2879,7 @@ function updateRivals(R, dt) {
       target = Math.min(target, Math.sqrt(vc * vc + 2 * RIVAL_BRAKE * d));
     }
     if (seg.dirt) target *= 0.92;
+    if (seg.puddle && R.env.cur.wet > 0.35 && Math.abs(c.x - seg.puddle.x) < seg.puddle.w + 0.12) { target *= 0.9; c.x += (Math.random() * 2 - 1) * 0.6 * dt; }
     // ---- too fast for the corner: the car slides wide and scrubs speed, like yours ----
     const demand = sp * sp * Math.abs(seg.curve) * cf;
     c.slip = demand > trueLim && sp > 0.4 ? Math.min(1, c.slip + dt * 2) : Math.max(0, c.slip - dt * 3);
@@ -2853,12 +2992,13 @@ function updateRace(R, dt) {
   const seg = R.T.segs[Math.floor(p.z / SEG_LEN) % R.T.segs.length];
   R.bgOff += seg.curve * (p.speed / MAX_SPEED) * dt * 26;
   if (R.shakeT > 0) { R.shakeT -= dt; R.shakeX = (Math.random() * 2 - 1) * 90; } else R.shakeX = 0;
+  updateEnv(R, dt);
   updateWeather(R, dt);
   updateFX(R, dt);
   for (const k of R.knocked) if (k.knockT > 0) k.knockT -= dt;
   R.knocked = R.knocked.filter(k => k.knockT > 0);
   if (R.dmgShow > 0) R.dmgShow -= dt;
-  if (R.theme.rain) {
+  if (R.env.weather === 'STORM') {
     R.thunderT -= dt;
     if (R.thunderT <= 0 && !inTunnel(R)) { R.flash = 0.18; R.thunderT = 7 + Math.random() * 9; setTimeout(() => chip.sfx('thunder'), 350); }
   }
@@ -2948,7 +3088,13 @@ function drawBank(x, y, w, label, T) {
     }
   }
 }
-function startIntro(trackIdx) { G.sel = trackIdx; G.race = null; setState('intro'); music('select'); }
+function startIntro(trackIdx) {
+  G.sel = trackIdx; G.race = null;
+  const T = getTrack(trackIdx), cup = G.mode === 'career' && G.cup ? CUPS[G.cup.tier] : null;
+  G.nextEnv = { ...rollEnv(T, cup ? cup.laps : T.laps), track: trackIdx };   // conditions for this race, shown before the garage
+  applyEnvTrack(T, G.nextEnv);
+  setState('intro'); music('select');
+}
 function startRace() { G.demo = null; G.race = newRace(G.sel, false); chip.stop(); chip.engineStart(); setState('race'); }
 
 // ---------------- HUD ----------------
@@ -3160,14 +3306,21 @@ function update(dt) {
   }
 }
 
-function drawTrackInfo(T, y, laps) {
+function drawTrackInfo(T, y, laps, env) {
   fb.drawText(2, y, T.def.name);
-  fb.drawSmall(2, y + 11, T.def.weather + ' / ' + T.theme.cond.toUpperCase());
-  fb.drawSmall(2, y + 18, laps + ' LAPS' + (T.radars.length ? ' RADAR' : ''));
-  fb.drawSmall(2, y + 25, (T.dirtPct ? 'DIRT ' + T.dirtPct + '%' : 'PAVED') + ' ' + T.bumps);
-  // what the garage should aim for
-  const tip = T.dirtPct >= 10 || T.bumps === 'BUMPY' ? 'SUSP HIGH' : T.bumps === 'FLAT' ? 'SUSP LOW' : 'SUSP MID';
-  fb.drawSmall(2, y + 32, 'TIP: ' + tip);
+  let yy = y + 11;
+  const line = (t) => { fb.drawSmall(2, yy, t); yy += 6; };
+  if (env) {
+    line(env.time + ' ' + env.weather + ' ' + envCond(env).toUpperCase());
+    if (env.forecast) line('LATER: ' + env.forecast + '?');
+  } else line('CONDITIONS VARY');
+  line(laps + ' LAPS' + (T.radars.length ? ' RADAR' : ''));
+  if (env) {
+    line((T.dirtPct ? 'DIRT ' + T.dirtPct + '%' : 'PAVED') + ' ' + T.bumps);
+    // what the garage should aim for
+    const tip = T.dirtPct >= 10 || T.bumps === 'BUMPY' ? 'SUSP HIGH' : T.bumps === 'FLAT' ? 'SUSP LOW' : 'SUSP MID';
+    line('TIP: ' + tip);
+  } else line(T.bumps);
 }
 
 function draw() {
@@ -3217,8 +3370,8 @@ function draw() {
       fb.drawSmall(1, 1, cup ? cup.short + ' ' + (G.cup.round + 1) + '/' + cup.tracks.length : 'FREE RACE');
       const m = fmtMoney(G.save.money); if (cup) fb.drawSmall(WIDTH - fb.smallWidth(m) - 1, 1, m);
       fb.hline(0, WIDTH - 1, 7, 1);
-      drawTrackInfo(T, 10, cup ? cup.laps : T.laps);
-      if (cup) fb.drawSmall(2, 49, '1ST ' + fmtMoney(cup.prize[0]));
+      drawTrackInfo(T, 10, cup ? cup.laps : T.laps, G.nextEnv);
+      if (cup) fb.drawSmall(2, 51, '1ST ' + fmtMoney(cup.prize[0]));
       drawMap(fb, T, 66, 9, 60, 46, null);
       if ((G.frame >> 4) & 1) fb.drawSmall(2, 58, 'START: SETUP');
       break;
