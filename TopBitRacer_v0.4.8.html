@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.7</title>
+<title>TopBitRacer v0.4.8</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.7</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.8</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.7</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.8</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -638,6 +638,8 @@ const SFX = {
   first:  [{ ch: 1, dur: 0.06, freq: 1047, duty: 0.25, vol: 0.18 }, { ch: 1, at: 0.07, dur: 0.06, freq: 1319, duty: 0.25, vol: 0.18 },
            { ch: 1, at: 0.14, dur: 0.06, freq: 1568, duty: 0.25, vol: 0.18 }, { ch: 1, at: 0.21, dur: 0.3, freq: 2093, duty: 0.25, vol: 0.18, decay: true },
            { ch: 0, at: 0.21, dur: 0.3, freq: 1568, duty: 0.5, vol: 0.12, decay: true }],
+  star:   [{ ch: 0, dur: 0.07, freq: 880, duty: 0.5, vol: 0.14 }, { ch: 0, at: 0.08, dur: 0.07, freq: 660, duty: 0.5, vol: 0.14 },
+           { ch: 0, at: 0.16, dur: 0.12, freq: 880, duty: 0.5, vol: 0.14 }],
   pass:   [{ ch: 1, dur: 0.05, freq: 1200, duty: 0.125, vol: 0.12 }],
   thunder:[{ ch: 3, dur: 1.6, rate: 0.25, rateTo: 0.06, filter: 'lowpass', cut: 900, cutTo: 120, vol: 0.8, decay: true }],
   skid:   [{ ch: 3, dur: 0.12, rate: 1, filter: 'bandpass', cut: 2500, vol: 0.18, metal: true, decay: true }],
@@ -1928,11 +1930,11 @@ const SHOP_LIST = Object.keys(PARTS).filter(k => PARTS[k].price > 0);
 
 // Career cups. tracks are TRACKS indices.
 const CUPS = [
-  { name: 'ROOKIE CUP', short: 'ROOKIE', tracks: [5, 6, 7], fee: 0, laps: 3, add: -0.06, fine: 100, bonus: [1500, 700, 300],
+  { name: 'ROOKIE CUP', short: 'ROOKIE', tracks: [5, 6, 7], fee: 0, laps: 3, add: -0.06, fine: [100, 250, 500], bonus: [1500, 700, 300],
     prize: [800, 500, 300, 150, 50, 50, 50, 50] },
-  { name: 'PRO CUP', short: 'PRO', tracks: [0, 1, 2, 3, 4], fee: 1000, laps: 3, add: 0, fine: 300, bonus: [5000, 2500, 1000],
+  { name: 'PRO CUP', short: 'PRO', tracks: [0, 1, 2, 3, 4], fee: 1000, laps: 3, add: 0, fine: [300, 700, 1200], bonus: [5000, 2500, 1000],
     prize: [3000, 2000, 1200, 700, 400, 150, 150, 150] },
-  { name: 'ELITE CUP', short: 'ELITE', tracks: [2, 4, 1, 3, 0], fee: 3000, laps: 3, add: 0.04, fine: 800, bonus: [15000, 7000, 3000],
+  { name: 'ELITE CUP', short: 'ELITE', tracks: [2, 4, 1, 3, 0], fee: 3000, laps: 3, add: 0.04, fine: [800, 1500, 2500], bonus: [15000, 7000, 3000],
     prize: [8000, 5000, 3000, 1500, 800, 300, 300, 300] }
 ];
 const START_MONEY = 1500;
@@ -2138,7 +2140,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.7';
+const APP_VERSION = '0.4.8';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2223,7 +2225,7 @@ function newRace(trackIdx, demo) {
               phase: demo ? 'race' : 'countdown', cdT: 0, msg: null, particles: [], flash: 0, thunderT: 5 + Math.random() * 6,
               demo, finishT: 0, trackIdx, pos: 8, lastPos: 8, offT: 0, wallT: 0,
               level: LV, fx: [], dmgShow: 0, squealT: 0, laps: cup ? cup.laps : T.laps, cup,
-              fine: cup ? cup.fine : 600, fines: 0, cop: null, sirenT: 0, radarT: 0, radarBlink: 0, scrapeT: 0, knocked: [] };
+              fine: cup ? cup.fine : [300, 700, 1200], fines: 0, cop: null, sirenT: 0, radarT: 0, radarBlink: 0, scrapeT: 0, knocked: [] };
   T.segs.forEach(sg => sg.sprites.forEach(sp => { sp.knockT = 0; }));
   rollRadars(R);
   placeCars(R);
@@ -2386,6 +2388,14 @@ function explode(R) {
 }
 
 // ---------------- police ----------------
+// wanted level: 1 star caught speeding (stop when told: minimum fine), 2 stars fleeing (ignore the order,
+// burn nitro, cut past it), 3 stars for hitting the cop or making it ram you (maximum). Get away and you pay nothing.
+function addStars(R, n, why) {
+  const c = R.cop; if (!c || n <= c.stars) return;
+  c.stars = n; R.starFlash = 1.2; chip.sfx('star');
+  msg(R, why, 1.6, false);
+}
+const copFine = (R) => R.fine[Math.max(1, (R.cop && R.cop.stars) || 1) - 1];
 function chargeFine(R, amount, label) {
   chip.sfx('nocash');
   if (G.mode === 'career' && !R.demo) {
@@ -2396,7 +2406,7 @@ function chargeFine(R, amount, label) {
 function startChase(R) {
   const p = R.player;
   const c = { name: 'COP', isCop: true, z: p.z - SEG_LEN * 4, x: 1.3, xT: 1.3, speed: p.speed, chaseT: 0, lap: p.lap, steer: 0, wheel: 0, segI: -1,
-              spr: SPR_COP[0], state: 'chase', t: 0, stopT: 0, lostT: 0 };
+              spr: SPR_COP[0], state: 'chase', t: 0, stopT: 0, lostT: 0, stars: 1 };
   if (c.z < 0) { c.z += R.T.length; c.lap--; }
   R.cop = c; R.all.push(c); R.sirenT = 0;
   msg(R, 'SPEEDING!', 1.6, false);
@@ -2411,7 +2421,7 @@ function busted(R) {
   p.held = true; p.holdT = 3; p.speed = 0; p.vx = 0; p.nitroT = 0; p.slingT = 0;
   p.x = (p.x >= 0 ? 1 : -1) * 1.25;
   R.shakeT = 0.4; chip.sfx('crash');
-  chargeFine(R, R.fine * 2, 'BUSTED!');
+  chargeFine(R, copFine(R), 'BUSTED!');
   c.state = 'parked'; c.t = 0; c.speed = 0; c.x = p.x * 0.6; moveCar(R, c, wrapDz(R, p.z + SEG_LEN * 0.9 - c.z));
 }
 const COP_MAX = 1.04;                 // cop top speed (x MAX_SPEED): nitro, slingshot or engine upgrades can outrun it
@@ -2437,6 +2447,7 @@ function updateCop(R, dt) {
     target = MAX_SPEED * COP_MAX;
     c.xT = p.x + (p.x > 0 ? -0.6 : 0.6);       // come up on the side
     if (dz > -SEG_LEN * 0.4) { c.state = 'pull'; c.t = 0; copSay(R, 'PULL OVER!'); }
+    if (p.nitroT > 0 || p.slingT > 0) addStars(R, 2, 'FLEEING');
     runaway();
   } else if (c.state === 'pull') {
     // sit in front at COP_GAP, in your lane; it can't beat its own top speed, so nitro can still cut past it
@@ -2444,19 +2455,20 @@ function updateCop(R, dt) {
     // blocks only while you're right behind it; commit to one side and it holds its lane, so you can go around
     if (Math.abs(p.x - c.x) < 0.35) c.xT = p.x; else c.xT = c.x;
     lat = 0.5;
-    if (p.speed < MAX_SPEED * 0.12) { c.stopT += dt; if (c.stopT > 0.8) { chargeFine(R, R.fine, 'FINE'); c.state = 'leave'; c.t = 0; } }
+    if (p.speed < MAX_SPEED * 0.12) { c.stopT += dt; if (c.stopT > 0.8) { chargeFine(R, copFine(R), 'FINE'); c.state = 'leave'; c.t = 0; } }
     if (dz > 0 && dz < 160 && Math.abs(c.x - p.x) < HIT_X && p.speed > c.speed) {   // rear-ended the cop: bounce, and now it gets angry
       p.speed = c.speed * 0.8; moveCar(R, p, -(160 - dz)); R.shakeT = 0.25; chip.sfx('bump');
-      c.state = 'ram'; c.t = 0; copSay(R, 'STOP NOW!');
+      c.state = 'ram'; c.t = 0; copSay(R, 'STOP NOW!'); addStars(R, 3, 'HIT A COP');
     }
-    if (dz < -SEG_LEN * 0.3) { c.state = 'chase'; c.t = 0; c.lostT = 0; msg(R, 'GETAWAY!', 1.2, false); }   // you got past it
-    else if (c.t > 6) { c.state = 'ram'; c.t = 0; copSay(R, 'STOP NOW!'); }
+    if (c.t > 2.5 && p.speed > MAX_SPEED * 0.35) addStars(R, 2, 'IGNORED ORDER');
+    if (dz < -SEG_LEN * 0.3) { c.state = 'chase'; c.t = 0; c.lostT = 0; addStars(R, 2, 'GETAWAY'); }   // you got past it
+    else if (c.t > 6) { c.state = 'ram'; c.t = 0; copSay(R, 'STOP NOW!'); addStars(R, 3, 'RESISTING'); }
   } else if (c.state === 'ram') {
     // drops back beside you and pushes you off the road
     target = Math.min(MAX_SPEED * COP_MAX, Math.max(0, p.speed - dz * 3));
     c.xT = p.x; lat = 0.75;                      // it swerves slower than you: jink away, brake or burn nitro
     if (Math.abs(dz) < SEG_LEN * 0.5 && Math.abs(c.x - p.x) < 0.36) { busted(R); return; }
-    if (p.speed < MAX_SPEED * 0.12) { c.stopT += dt; if (c.stopT > 0.8) { chargeFine(R, R.fine, 'FINE'); c.state = 'leave'; c.t = 0; } }
+    if (p.speed < MAX_SPEED * 0.12) { c.stopT += dt; if (c.stopT > 0.8) { chargeFine(R, copFine(R), 'FINE'); c.state = 'leave'; c.t = 0; } }
     runaway();
   } else if (c.state === 'parked') {
     target = 0;
@@ -2817,6 +2829,7 @@ function updateRace(R, dt) {
   }
   if (R.goT > 0) R.goT -= dt;
   if (R.firstT > 0) R.firstT -= dt;
+  if (R.starFlash > 0) R.starFlash -= dt;
   if (R.phase === 'race' || R.phase === 'finish') R.time += dt;
   updatePlayer(R, dt);
   if (!R.demo) updateMood(R, dt);
@@ -2961,6 +2974,11 @@ function signText(text, y, sc) {
   for (let oy = -o; oy <= o; oy++) for (let ox = -o; ox <= o; ox++) if (ox || oy) fb.drawText(x + ox, y + oy, text, sc, 0);
   fb.drawText(x, y, text, sc, 1);
 }
+const STAR = ['..#..', '.###.', '#####', '.###.', '#...#'];
+function drawStar(x, y, on) {
+  for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++)
+    if (STAR[j][i] === '#') { if (on) fb.setPixel(x + i, y + j, 1); else if ((i + j) % 2 === 0) fb.setPixel(x + i, y + j, 1); }
+}
 function drawHUD(R) {
   const p = R.player;
   fb.fillRect(0, 0, WIDTH, 7, 0);
@@ -3014,6 +3032,12 @@ function drawHUD(R) {
     fb.hline(KX - 8, KX + 21, 12, 1);
     const dx = Math.round(KX - 8 + k * 29);
     fb.fillRect(dx - 1, 10, 3, 5, (R.frame & 4) ? 1 : 0); fb.rect(dx - 1, 10, 3, 5, 1);
+  }
+  // wanted level: stars (top right) and what you'd pay if caught now
+  if (c && c.state !== 'leave' && c.state !== 'parked' && !(R.starFlash > 0 && (R.frame & 4))) {
+    fb.fillRect(WIDTH - 20, 8, 20, G.mode === 'career' ? 15 : 8, 0);
+    for (let i = 0; i < 3; i++) drawStar(WIDTH - 19 + i * 6, 9, i < c.stars);
+    if (G.mode === 'career') { const t = fmtMoney(copFine(R)); fb.drawSmall(WIDTH - 1 - fb.smallWidth(t), 16, t); }
   }
   // messages
   if (R.phase === 'countdown') {

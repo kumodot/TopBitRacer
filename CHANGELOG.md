@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.8 (2026-11-11)
+- Wanted level: 1 to 3 stars in the top right corner while the police chase you, with the fine you'd pay if caught right now. 1 star for speeding (stop when told: minimum fine), 2 for fleeing (ignoring the order, nitro, slingshot or cutting past it), 3 for hitting the cop or making it ram you. Escape and you pay nothing.
+- Fines per star: Rookie $100 / $250 / $500, Pro $300 / $700 / $1200, Elite $800 / $1500 / $2500.
+
 ## 0.4.7 (2026-11-11)
 - Lower police fines, about 10% of the cup's winning prize: Rookie $100, Pro $300, Elite $800 (busted is still double).
 
