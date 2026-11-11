@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 (2026-11-10)
+- Burnout style nitro: near misses give a quarter charge, drafting slowly refills it; partial charges show in the pips.
+- Much more visible speed lines while drafting, slingshotting and on nitro; draft zone a bit wider.
+- Police are less predictable: each speed trap is manned 60% of laps, and a speeder gets chased 70% of the time.
+- The police car collides with rivals and steers around traffic; rivals bump each other too.
+- Arcade obstacles off the road: soft ones fly away, trees throw you back to the road edge, buildings nearly stop you.
+- Wider road and a slightly smaller car hitbox to make overtaking easier.
+
 ## 0.3.3 (2026-11-10)
 - Messages moved out of the way: a small ticker at the top of the screen; only the start countdown and FINISH stay big.
 - The police talk from their car: small outlined text above the cop sprite.

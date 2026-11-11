@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.3.3.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.4.0.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -56,8 +56,10 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 - Auto gearbox, nitro, skids with smoke and squeal, damage (the car explodes after too many hits and you wait to respawn).
 - Pit lane on the right shoulder near the finish line: drive through it to repair damage for free (speed limited while inside). A *PIT>* hint blinks when you are damaged and it is coming up.
 - Dirt sections (Green Hills, Salt Flats, Mirage Run): bumps cost speed with a low ride, rally tires grip best. The track screen shows *DIRT %*, how bumpy it is and a suspension tip.
-- Slipstream: sit behind a car to charge the draft, pull out sideways for a slingshot.
-- Speed traps on street circuits: pass above 176 km/h and a cop chases you. Stop and pay the fine, or cut past it with nitro and leave it 12 segments behind to get away. Ignore it and it rams you off the road.
+- Slipstream: sit behind a car to charge the draft (speed lines streak past), pull out sideways for a slingshot.
+- Nitro refills Burnout style: *NEAR MISS* (pass a car really close) gives a quarter charge, drafting slowly tops it up. Partly filled charges show in the nitro pips.
+- Off the road: bushes, signs and posts fly away; trees and palms throw you back to the road edge; buildings, rocks and lamp posts nearly stop you. The action keeps going.
+- Speed traps on street circuits (not every trap is manned every lap, and not every speeder gets chased): pass above 176 km/h and a cop may chase you. The police car is solid for everyone. Stop and pay the fine, or cut past it with nitro and leave it 12 segments behind to get away. Ignore it and it rams you off the road.
 - Levels EASY / NORMAL / HARD, 8 circuits: Sun Coast, Mirage Run, Neon Metro (tunnels), Frost Peak (snow), Storm Woods (rain, fog, lightning), Bay Street, Green Hills, Salt Flats.
 
 ## Projects / saved data
@@ -77,7 +79,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.3.3.html    the game (single file)
+TopBitRacer_v0.4.0.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE
