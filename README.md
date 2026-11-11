@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.4.0.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.4.1.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -39,7 +39,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 
 **Career**
 - Start with $1500. *ROOKIE CUP* (free, 3 short circuits), *PRO CUP* ($1000, 5 circuits), *ELITE CUP* ($3000, faster rivals).
-- Win a cup (most points) to unlock the next one and earn a bonus. Prize money for every finish.
+- Prize money for every finish, counted into your bank on the payout screen. The top 3 of a cup get a bonus; win it (most points) to unlock the next cup.
 - Police fines can put you in debt (shown as *DEBT -$...*): in debt only the free *ROOKIE CUP* is open until you pay it off.
 
 **Garage** (before every race, and from the career hub)
@@ -79,7 +79,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.4.0.html    the game (single file)
+TopBitRacer_v0.4.1.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE

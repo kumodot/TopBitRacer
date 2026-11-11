@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 (2026-11-10)
+- Payout screen: after each career race the prize and fines count up, then the money rolls into your bank with a payday jingle (press A to skip the count).
+- Cup end: the top 3 now get a bonus (Rookie $1500 / $700 / $300, Pro $5000 / $2500 / $1000, Elite $15000 / $7000 / $3000), counted into the bank the same way. Only the winner unlocks the next cup.
+
 ## 0.4.0 (2026-11-10)
 - Burnout style nitro: near misses give a quarter charge, drafting slowly refills it; partial charges show in the pips.
 - Much more visible speed lines while drafting, slingshotting and on nitro; draft zone a bit wider.

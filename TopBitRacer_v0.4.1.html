@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.0</title>
+<title>TopBitRacer v0.4.1</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.0</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.1</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.0</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.1</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -627,6 +627,12 @@ const SFX = {
   sling:  [{ ch: 3, dur: 0.7, rate: 0.5, rateTo: 1.6, filter: 'bandpass', cut: 700, cutTo: 5000, vol: 0.45 }],
   cash:   [{ ch: 1, dur: 0.06, freq: 1319, duty: 0.25, vol: 0.2 }, { ch: 1, at: 0.07, dur: 0.06, freq: 1568, duty: 0.25, vol: 0.2 },
            { ch: 1, at: 0.14, dur: 0.15, freq: 2093, duty: 0.25, vol: 0.2 }],
+  coin:     [{ ch: 1, dur: 0.028, freq: 1760, duty: 0.125, vol: 0.11 }],
+  coindown: [{ ch: 1, dur: 0.035, freq: 330, duty: 0.5, vol: 0.12 }],
+  payday: [{ ch: 1, dur: 0.05, freq: 1568, duty: 0.125, vol: 0.18 }, { ch: 1, at: 0.055, dur: 0.05, freq: 2093, duty: 0.125, vol: 0.18 },
+           { ch: 1, at: 0.11, dur: 0.05, freq: 2637, duty: 0.125, vol: 0.18 }, { ch: 1, at: 0.165, dur: 0.05, freq: 3136, duty: 0.125, vol: 0.18 },
+           { ch: 1, at: 0.24, dur: 0.05, freq: 2637, duty: 0.125, vol: 0.14 }, { ch: 1, at: 0.295, dur: 0.4, freq: 4186, duty: 0.125, vol: 0.14, decay: true },
+           { ch: 0, at: 0.11, dur: 0.06, freq: 1047, duty: 0.25, vol: 0.12 }, { ch: 0, at: 0.24, dur: 0.45, freq: 1568, duty: 0.25, vol: 0.12, decay: true }],
   nocash: [{ ch: 1, dur: 0.25, freq: 110, duty: 0.5, vol: 0.2 }],
   nearmiss: [{ ch: 1, dur: 0.05, freq: 1568, duty: 0.125, vol: 0.14 }, { ch: 1, at: 0.06, dur: 0.09, freq: 2637, duty: 0.125, vol: 0.14 }],
   repair: [{ ch: 1, dur: 0.05, freq: 1760, duty: 0.25, vol: 0.12 }, { ch: 1, at: 0.06, dur: 0.05, freq: 2349, duty: 0.25, vol: 0.12 }],
@@ -1846,11 +1852,11 @@ const SHOP_LIST = Object.keys(PARTS).filter(k => PARTS[k].price > 0);
 
 // Career cups. tracks are TRACKS indices.
 const CUPS = [
-  { name: 'ROOKIE CUP', short: 'ROOKIE', tracks: [5, 6, 7], fee: 0, laps: 3, add: -0.06, fine: 300, bonus: 1500,
+  { name: 'ROOKIE CUP', short: 'ROOKIE', tracks: [5, 6, 7], fee: 0, laps: 3, add: -0.06, fine: 300, bonus: [1500, 700, 300],
     prize: [800, 500, 300, 150, 50, 50, 50, 50] },
-  { name: 'PRO CUP', short: 'PRO', tracks: [0, 1, 2, 3, 4], fee: 1000, laps: 3, add: 0, fine: 600, bonus: 5000,
+  { name: 'PRO CUP', short: 'PRO', tracks: [0, 1, 2, 3, 4], fee: 1000, laps: 3, add: 0, fine: 600, bonus: [5000, 2500, 1000],
     prize: [3000, 2000, 1200, 700, 400, 150, 150, 150] },
-  { name: 'ELITE CUP', short: 'ELITE', tracks: [2, 4, 1, 3, 0], fee: 3000, laps: 3, add: 0.04, fine: 1000, bonus: 15000,
+  { name: 'ELITE CUP', short: 'ELITE', tracks: [2, 4, 1, 3, 0], fee: 3000, laps: 3, add: 0.04, fine: 1000, bonus: [15000, 7000, 3000],
     prize: [8000, 5000, 3000, 1500, 800, 300, 300, 300] }
 ];
 const START_MONEY = 1500;
@@ -2056,7 +2062,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.4.1';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2686,6 +2692,9 @@ function finishRace(R) {
     res.prize = cup.prize[pos - 1];
     G.save.money += res.prize; saveGame();
     rows.forEach((r, i) => { G.cup.pts[r.name] = (G.cup.pts[r.name] || 0) + POINTS[i]; });
+    // fines were already paid during the race: count from the bank before the race
+    res.tally = newTally([{ key: 'prize', to: res.prize }, { key: 'fines', to: res.fines, down: true }],
+      G.save.money - res.prize + res.fines, G.save.money);
   }
   G.results = res;
   music(pos <= 3 ? 'win' : 'lose');
@@ -2698,15 +2707,58 @@ function afterResults() {
   if (G.cup.round < cup.tracks.length) { startIntro(cup.tracks[G.cup.round]); return; }
   // cup finished: standings, bonus, unlock
   const stand = Object.entries(G.cup.pts).sort((a, b) => b[1] - a[1]);
-  const won = stand[0][0] === 'YOU';
-  G.cupEnd = { stand, won, tier: G.cup.tier, bonus: won ? cup.bonus : 0, unlocked: false };
+  const place = stand.findIndex(s => s[0] === 'YOU') + 1, won = place === 1;
+  const bonus = cup.bonus[place - 1] || 0;
+  G.cupEnd = { stand, won, place, tier: G.cup.tier, bonus, unlocked: false };
+  G.save.money += bonus;
   if (won) {
-    G.save.money += cup.bonus; G.save.won[G.cup.tier] = true;
+    G.save.won[G.cup.tier] = true;
     if (G.save.unlocked < G.cup.tier + 1 && G.cup.tier + 1 < CUPS.length) { G.save.unlocked = G.cup.tier + 1; G.cupEnd.unlocked = true; }
-    saveGame();
   }
+  saveGame();
+  G.cupEnd.tally = newTally([{ key: 'bonus', to: bonus }], G.save.money - bonus, G.save.money);
   G.cup = null;
   setState('cupend'); music(won ? 'win' : 'lose');
+}
+// ---------------- money tally (results / cup end) ----------------
+// counts each line up from 0 ("brrrr"), then transfers the net into the bank, then a payday jingle
+function newTally(steps, bankFrom, bankTo) {
+  const shown = {}; steps.forEach(s => shown[s.key] = 0);
+  return { steps, i: 0, t: -0.7, tick: 0, shown, bank: bankFrom, bankFrom, bankTo, done: false, doneT: 0 };
+}
+function tallyFinish(T) {
+  if (T.done) return;
+  T.steps.forEach(s => T.shown[s.key] = s.to); T.bank = T.bankTo;
+  T.i = T.steps.length + 1; T.done = true; T.doneT = 0;
+  const net = T.bankTo - T.bankFrom;
+  chip.sfx(net > 0 ? 'payday' : net < 0 ? 'nocash' : 'select');
+}
+function tallyUpdate(T, dt) {
+  if (T.done) { T.doneT += dt; return; }
+  T.t += dt; if (T.t < 0) return;
+  const bankStep = T.i >= T.steps.length, s = T.steps[T.i];
+  const from = bankStep ? T.bankFrom : 0, to = bankStep ? T.bankTo : s.to;
+  if (to === from) { T.i++; T.t = -0.15; if (T.i > T.steps.length) tallyFinish(T); return; }
+  const dur = Math.min(1.6, 0.35 + Math.abs(to - from) / 5000), k = Math.min(1, T.t / dur);
+  const v = Math.round(from + (to - from) * k);
+  if (bankStep) T.bank = v; else T.shown[s.key] = v;
+  const down = bankStep ? to < from : !!s.down;
+  T.tick -= dt;
+  if (T.tick <= 0) { T.tick = 0.045; chip.sfx(down ? 'coindown' : 'coin', down ? 1 - k * 0.25 : 1 + k * 0.5); }
+  if (k >= 1) { T.i++; T.t = -0.3; if (T.i > T.steps.length) tallyFinish(T); }
+}
+// bank line: inverted box that flashes when the money lands
+function drawBank(x, y, w, label, T) {
+  const s = label + fmtMoney(T.bank);
+  const inv = T.done && !(T.doneT < 0.6 && ((T.doneT * 10) | 0) & 1);
+  if (inv) fb.fillRect(x, y - 2, w, 9, 1);
+  fb.drawSmall(x + ((w - fb.smallWidth(s)) >> 1), y, s, inv ? 0 : 1);
+  if (T.done && T.doneT < 1 && T.bankTo > T.bankFrom) {      // sparkles
+    for (let i = 0; i < 4; i++) {
+      const sx = x + 3 + ((i * 41 + (G.frame >> 2) * 13) % (w - 6)), sy = y - 5 + ((i * 7 + (G.frame >> 2)) % 2) * 13;
+      fb.setPixel(sx, sy, 1); fb.setPixel(sx - 1, sy, 1); fb.setPixel(sx + 1, sy, 1); fb.setPixel(sx, sy - 1, 1); fb.setPixel(sx, sy + 1, 1);
+    }
+  }
 }
 function startIntro(trackIdx) { G.sel = trackIdx; G.race = null; setState('intro'); music('select'); }
 function startRace() { G.demo = null; G.race = newRace(G.sel, false); chip.stop(); chip.engineStart(); setState('race'); }
@@ -2882,13 +2934,25 @@ function update(dt) {
         else { chip.engineStop(); G.race = null; if (G.mode === 'career') { G.cup = null; enterCareer(); } else { setState('title'); music('title'); } }
       }
       break;
-    case 'results':
-      if (confirmHit() && G.t > 1) { chip.sfx('select'); afterResults(); }
+    case 'results': {
+      const T = G.results.tally;
+      if (T) tallyUpdate(T, dt);
+      if (confirmHit()) {
+        if (T && !T.done) tallyFinish(T);                       // skip the count
+        else if (G.t > 1) { chip.sfx('select'); afterResults(); }
+      }
       break;
-    case 'cupend':
+    }
+    case 'cupend': {
       demoRun(dt);
-      if (confirmHit() && G.t > 1.5) { chip.sfx('select'); enterCareer(); }
+      const T = G.cupEnd.tally;
+      tallyUpdate(T, dt);
+      if (confirmHit()) {
+        if (!T.done) tallyFinish(T);
+        else if (G.t > 1.5) { chip.sfx('select'); enterCareer(); }
+      }
       break;
+    }
   }
 }
 
@@ -2986,26 +3050,32 @@ function draw() {
       // money box
       fb.vline(71, 8, 63);
       fb.drawSmall(74, 10, ordinal(res.pos));
-      if (res.career) {
-        fb.drawSmall(74, 20, 'PRIZE'); fb.drawSmall(74, 27, '+' + fmtMoney(res.prize));
-        fb.drawSmall(74, 36, 'FINES'); fb.drawSmall(74, 43, res.fines ? '-' + fmtMoney(res.fines) : '$0');
-        fb.drawSmall(74, 52, fmtMoney(G.save.money));
+      const T = res.tally;
+      if (T) {
+        fb.drawSmall(74, 18, 'PRIZE'); if (T.t >= 0 || T.i > 0) fb.drawSmall(74, 24, '+' + fmtMoney(T.shown.prize));
+        fb.drawSmall(74, 31, 'FINES'); if (T.i >= 1) fb.drawSmall(74, 37, T.shown.fines ? '-' + fmtMoney(T.shown.fines) : '$0');
+        fb.hline(72, WIDTH - 1, 43, 1);
+        fb.drawSmall(74, 45, 'BANK');
+        drawBank(72, 51, WIDTH - 72, '', T);
       } else fb.drawSmall(74, 20, 'PRACTICE');
-      if (G.t > 1 && ((G.frame >> 4) & 1)) fb.drawSmall(WIDTH - fb.smallWidth('START') - 1, 58, 'START');
+      if (G.t > 1 && (!T || T.done) && ((G.frame >> 4) & 1)) fb.drawSmall(WIDTH - fb.smallWidth('START') - 1, 58, 'START');
       break;
     }
     case 'cupend': {
       drawDemo();
       const ce = G.cupEnd, cup = CUPS[ce.tier];
-      panel(6, 4, 116, 56);
-      fb.drawTextC(7, ce.won ? 'CUP WON!' : 'CUP OVER');
-      fb.drawSmallC(16, cup.name);
+      panel(6, 3, 116, 58);
+      fb.drawTextC(6, ce.won ? 'CUP WON!' : ordinal(ce.place) + ' PLACE');
+      fb.drawSmallC(15, cup.name);
       ce.stand.slice(0, 4).forEach(([n, v], i) => {
-        const y = 24 + i * 6, s = (i + 1) + ' ' + n.padEnd(6) + String(v).padStart(3) + ' PTS';
+        const y = 22 + i * 6, s = (i + 1) + ' ' + n.padEnd(6) + String(v).padStart(3) + ' PTS';
         if (n === 'YOU') { fb.fillRect(10, y - 1, 108, 7, 1); fb.drawSmall(14, y, s, 0); } else fb.drawSmall(14, y, s);
       });
-      if (ce.won) fb.drawSmallC(49, 'BONUS +' + fmtMoney(ce.bonus) + (ce.unlocked ? '  ' + CUPS[ce.tier + 1].short + ' OPEN' : ''));
-      else fb.drawSmallC(49, 'WIN THE CUP TO MOVE UP');
+      const T = ce.tally;
+      const note = ce.unlocked ? CUPS[ce.tier + 1].name + ' OPEN!' : !ce.won ? 'WIN THE CUP TO MOVE UP' : '';
+      if (T.done && note && ((T.doneT / 1.6) | 0) & 1) fb.drawSmallC(47, note);
+      else fb.drawSmallC(47, ce.bonus ? 'TOP 3 BONUS +' + fmtMoney(T.shown.bonus) : 'NO BONUS: TOP 3 ONLY');
+      drawBank(30, 54, 68, 'BANK ', T);
       break;
     }
   }
