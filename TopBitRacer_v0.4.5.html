@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.4</title>
+<title>TopBitRacer v0.4.5</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.4</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.5</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.4</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.5</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -635,6 +635,9 @@ const SFX = {
   final:  [{ ch: 0, dur: 0.12, freq: 784, duty: 0.25, vol: 0.25 }, { ch: 0, at: 0.14, dur: 0.12, freq: 784, duty: 0.25, vol: 0.25 },
            { ch: 0, at: 0.28, dur: 0.35, freq: 1175, duty: 0.25, vol: 0.25, vib: true }],
   offroad:[{ ch: 3, dur: 0.07, rate: 0.3, filter: 'lowpass', cut: 500, vol: 0.35, decay: true }],
+  first:  [{ ch: 1, dur: 0.06, freq: 1047, duty: 0.25, vol: 0.18 }, { ch: 1, at: 0.07, dur: 0.06, freq: 1319, duty: 0.25, vol: 0.18 },
+           { ch: 1, at: 0.14, dur: 0.06, freq: 1568, duty: 0.25, vol: 0.18 }, { ch: 1, at: 0.21, dur: 0.3, freq: 2093, duty: 0.25, vol: 0.18, decay: true },
+           { ch: 0, at: 0.21, dur: 0.3, freq: 1568, duty: 0.5, vol: 0.12, decay: true }],
   pass:   [{ ch: 1, dur: 0.05, freq: 1200, duty: 0.125, vol: 0.12 }],
   thunder:[{ ch: 3, dur: 1.6, rate: 0.25, rateTo: 0.06, filter: 'lowpass', cut: 900, cutTo: 120, vol: 0.8, decay: true }],
   skid:   [{ ch: 3, dur: 0.12, rate: 1, filter: 'bandpass', cut: 2500, vol: 0.18, metal: true, decay: true }],
@@ -2135,7 +2138,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.4';
+const APP_VERSION = '0.4.5';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2210,7 +2213,8 @@ function newRace(trackIdx, demo) {
     let z = startZ + row * 6 * SEG_LEN + (i === 0 ? 30 : 0), lap = 0;
     if (z >= L) { z -= L; lap = 1; }
     cars.push({ name: RIVAL_NAMES[i], z, x, xT: x, speed: 0, lap, spr: SPR_RIVALS[i % 3], steer: 0, finished: false, finishTime: 0, segI: -1,
-                maxSpeed: MAX_SPEED * (theme.rivalBase + LV.add + (cup ? cup.add : 0) - 0.07 + i * 0.017), lane: x,
+                maxSpeed: MAX_SPEED * (theme.rivalBase + LV.add + (cup ? cup.add : 0) - 0.09 + i * 0.024), lane: x,
+                ambition: i / 6, launch: 0.75 + Math.random() * 0.4,
                 wheel: Math.random() * 4, nitro: LV.nitro, nitroT: 0, blockT: 0, blockCd: 3 + Math.random() * 4, bustT: 0 });
   }
   const R = { T, sky: buildSky(theme.sky), theme, player, cars, all: [...cars, player], bgOff: 0, shakeX: 0, shakeT: 0, frame: 0, time: 0,
@@ -2389,7 +2393,7 @@ function chargeFine(R, amount, label) {
 }
 function startChase(R) {
   const p = R.player;
-  const c = { name: 'COP', isCop: true, z: p.z - SEG_LEN * 2, x: 1.3, xT: 1.3, speed: p.speed * 0.7, lap: p.lap, steer: 0, wheel: 0, segI: -1,
+  const c = { name: 'COP', isCop: true, z: p.z - SEG_LEN * 4, x: 1.3, xT: 1.3, speed: p.speed, chaseT: 0, lap: p.lap, steer: 0, wheel: 0, segI: -1,
               spr: SPR_COP[0], state: 'chase', t: 0, stopT: 0, lostT: 0 };
   if (c.z < 0) { c.z += R.T.length; c.lap--; }
   R.cop = c; R.all.push(c); R.sirenT = 0;
@@ -2408,9 +2412,10 @@ function busted(R) {
   chargeFine(R, R.fine * 2, 'BUSTED!');
   c.state = 'parked'; c.t = 0; c.speed = 0; c.x = p.x * 0.6; moveCar(R, c, wrapDz(R, p.z + SEG_LEN * 0.9 - c.z));
 }
-const COP_MAX = 1.06;                 // cop top speed (x MAX_SPEED): nitro, slingshot or engine upgrades can outrun it
+const COP_MAX = 1.04;                 // cop top speed (x MAX_SPEED): nitro, slingshot or engine upgrades can outrun it
 const COP_GAP = SEG_LEN * 3.2;        // distance the cop keeps in front while pulling you over (stays visible above your car)
-const COP_GIVEUP = SEG_LEN * 12, COP_GIVEUP_T = 2.5;
+const COP_GIVEUP = SEG_LEN * 8, COP_GIVEUP_T = 1.8;
+const COP_PATIENCE = 16;              // seconds of pursuit before the cop calls it off
 function updateCop(R, dt) {
   const c = R.cop; if (!c) return;
   const p = R.player;
@@ -2419,10 +2424,13 @@ function updateCop(R, dt) {
   const dz = wrapDz(R, c.z - p.z);           // > 0: cop ahead of the player
   let target = c.speed, accel = MAX_SPEED / 3, lat = 1.3;
   // left far behind: gives up
+  // out of sight it loses track (and doesn't instantly forget when you're seen again); it also runs out of patience
   const runaway = () => {
-    if (dz < -COP_GIVEUP) { c.lostT += dt; if (c.lostT > COP_GIVEUP_T) { c.state = 'leave'; c.t = 0; msg(R, 'ESCAPED!', 1.6); chip.sfx('lap'); } }
-    else c.lostT = 0;
+    if (dz < -COP_GIVEUP && c.chaseT > 2) c.lostT += dt * (p.nitroT > 0 || p.slingT > 0 ? 1.6 : 1);
+    else c.lostT = Math.max(0, c.lostT - dt * 0.5);
+    if (c.lostT > COP_GIVEUP_T || c.chaseT > COP_PATIENCE) { c.state = 'leave'; c.t = 0; msg(R, 'ESCAPED!', 1.6); chip.sfx('lap'); }
   };
+  if (c.state !== 'leave' && c.state !== 'parked') c.chaseT += dt;
   if (c.state === 'chase') {
     target = MAX_SPEED * COP_MAX;
     c.xT = p.x + (p.x > 0 ? -0.6 : 0.6);       // come up on the side
@@ -2444,8 +2452,8 @@ function updateCop(R, dt) {
   } else if (c.state === 'ram') {
     // drops back beside you and pushes you off the road
     target = Math.min(MAX_SPEED * COP_MAX, Math.max(0, p.speed - dz * 3));
-    c.xT = p.x;
-    if (Math.abs(dz) < SEG_LEN * 0.6 && Math.abs(c.x - p.x) < 0.5) { busted(R); return; }
+    c.xT = p.x; lat = 0.75;                      // it swerves slower than you: jink away, brake or burn nitro
+    if (Math.abs(dz) < SEG_LEN * 0.5 && Math.abs(c.x - p.x) < 0.36) { busted(R); return; }
     if (p.speed < MAX_SPEED * 0.12) { c.stopT += dt; if (c.stopT > 0.8) { chargeFine(R, R.fine, 'FINE'); c.state = 'leave'; c.t = 0; } }
     runaway();
   } else if (c.state === 'parked') {
@@ -2539,7 +2547,8 @@ function updatePlayer(R, dt) {
 
   // ---- slipstream: charge behind a car, pull out to slingshot ----
   let dcar = null;
-  if (sp > 0.5) for (const c of R.cars) {
+  if (sp > 0.5) for (const c of R.all) {
+    if (c === p) continue;                    // rivals and the police car
     const dz = wrapDz(R, c.z - p.z);
     if (dz > SEG_LEN * 0.5 && dz < SEG_LEN * 8 && Math.abs(c.x - p.x) < 0.38) { dcar = c; break; }
   }
@@ -2683,6 +2692,7 @@ function updatePlayer(R, dt) {
 function updateRivals(R, dt) {
   const p = R.player, segs = R.T.segs, N = segs.length, LV = R.level;
   for (const c of R.cars) {
+    if (R.phase === 'countdown') { c.speed = 0; c.steer = 0; c.xT = c.x; continue; }   // grid holds still until GO
     const seg = segs[Math.floor(c.z / SEG_LEN) % N];
     let target = c.maxSpeed;
     // rivals respect the same grip limit as the player
@@ -2691,7 +2701,11 @@ function updateRivals(R, dt) {
     if (seg.dirt) target *= 0.9;
     const gap = (progress(R, c) - progress(R, p)) / SEG_LEN;   // > 0: rival ahead of player
     if (!R.demo && !p.finished) {
-      if (gap > 50) target *= LV.ahead; else if (gap < -120) target *= LV.behind;
+      // catch-up: the further behind you a rival is, the harder it pushes (the front runners most);
+      // a rival far ahead eases off. Keeps the race close without everyone glued together.
+      const push = 0.35 + 0.65 * c.ambition;
+      if (gap < 0) target *= 1 + Math.min(1, -gap / 45) * (LV.behind - 1) * push;
+      else target *= 1 - Math.min(1, gap / 70) * (1 - LV.ahead);
       // rival nitro: used when racing close to the player on a straight
       if (c.nitro > 0 && c.nitroT <= 0 && Math.abs(gap) < 10 && Math.abs(seg.curve) < 1 && Math.random() < dt * 0.35 && R.phase === 'race') {
         c.nitro--; c.nitroT = 2.2; if (Math.abs(gap) < 8) chip.sfx('rivalnitro');
@@ -2721,7 +2735,7 @@ function updateRivals(R, dt) {
     const mv = Math.max(-dt * 0.9, Math.min(dt * 0.9, c.xT - c.x));
     c.x += mv; c.steer = mv / (dt * 0.9 + 1e-6);
     if (R.phase === 'countdown') target = 0;
-    const acc = MAX_SPEED / 4.5 * (c.nitroT > 0 ? 2 : 1) * (c.bustT > 0 ? 3 : 1);
+    const acc = MAX_SPEED / 4.5 * (R.time < 6 ? c.launch : 1) * (c.nitroT > 0 ? 2 : 1) * (c.bustT > 0 ? 3 : 1);
     c.speed += Math.sign(target - c.speed) * Math.min(Math.abs(target - c.speed), acc * dt);
     const before = c.lap, z0 = c.z;
     moveCar(R, c, c.speed * dt);
@@ -2765,6 +2779,7 @@ function updateRace(R, dt) {
     return;
   }
   if (R.goT > 0) R.goT -= dt;
+  if (R.firstT > 0) R.firstT -= dt;
   if (R.phase === 'race' || R.phase === 'finish') R.time += dt;
   updatePlayer(R, dt);
   if (!R.demo) updateMood(R, dt);
@@ -2780,7 +2795,9 @@ function updateRace(R, dt) {
   // positions
   if (!p.finished) {
     R.pos = 1 + R.cars.filter(c => c.finished || progress(R, c) > progress(R, p)).length;
-    if (R.pos < R.lastPos && R.phase === 'race' && !R.demo) chip.sfx('pass');
+    if (R.pos < R.lastPos && R.phase === 'race' && !R.demo) {
+      if (R.pos === 1 && R.time > 2) { R.firstT = 1.3; chip.sfx('first'); } else chip.sfx('pass');
+    } else if (R.pos > R.lastPos && R.lastPos === 1 && R.phase === 'race' && !R.demo) msg(R, 'LEAD LOST', 1.2);
     R.lastPos = R.pos;
   } else R.pos = p.finalPos;
   // parallax + shake + weather
@@ -2969,6 +2986,7 @@ function drawHUD(R) {
     for (let i = 0; i < 3; i++) { const x = KX - 12 + i * 12, on = R.cdT >= 0.5 + i; fb.fillCircle(x, 10, 3, 0); fb.circle(x, 10, 3, 1); if (on) fb.fillCircle(x, 10, 2, 1); }
   } else if (R.resumeT > 0) signText(String(Math.ceil(R.resumeT)), 16, 3);
   else if (!R.demo && R.phase === 'race' && (R.time < 0.6 || R.goT > 0)) signText('GO!', 16, 3);
+  else if (R.firstT > 0 && ((R.firstT * 8) | 0) % 2 === 0) signText('FIRST!', 18, 2);   // took the lead: brief flashing banner
   // FINISH keeps the big sign (the race is over); everything else is a small ticker at the top
   const topBusy = (R.cop && (R.cop.state === 'chase' || R.cop.state === 'ram')) || R.radarBlink > 0 || (p.st.radar && nextRadar(R) < 45);
   if (R.msg && R.msg.big) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.5 (2026-11-11)
+- Fix: rivals no longer slide sideways on the grid before GO.
+- Rivals: wider spread of pace and launch so the field strings out; smooth catch-up (rubber band) that pushes the front runners hardest when you lead and eases off a rival far ahead, so the lead can change hands.
+- Police: top speed 1.04, starts further back at your speed; loses you after 1.8 s out of sight (faster on nitro) and doesn't forget instantly when it sees you again; gives up after 16 s of pursuit. In STOP NOW mode it swerves slower than you and needs a closer hit, so you can dodge it.
+- Slipstream works behind the police car too.
+- Taking the lead flashes FIRST! with a jingle; losing it shows LEAD LOST on the ticker.
+
 ## 0.4.4 (2026-11-10)
 - Dynamic race music: speed, nitro, slingshot, slipstream, a police chase and the final lap push the song up (up to about 7% faster, arpeggios fill in, driving bass, ghost 16th hats); a crash calms it down for a few seconds, a wreck almost to drums and bass. Layers switch on the beat or bar so it stays in time. Menus play the songs as written.
 
