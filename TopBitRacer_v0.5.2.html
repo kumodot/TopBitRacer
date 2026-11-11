@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.5.1</title>
+<title>TopBitRacer v0.5.2</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.5.1</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.5.2</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.5.1</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.5.2</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -916,6 +916,27 @@ const CAR_PLAYER_ROWS = [
   '#TTTT#..................#TTTT#',
   '######                  ######'
 ];
+// nose up off a jump ramp: the rear tilts away and the hood and front show over the roof
+const CAR_PITCH_ROWS = [
+  '      ##################      ',
+  '     #.###..........###.#     ',
+  '     #..................#     ',
+  '    #....................#    ',
+  '    #....................#    ',
+  '    ######################    ',
+  '     #..................#     ',
+  '      ##################      ',
+  '        ##############        ',
+  '       #..............#       ',
+  '      #................#      ',
+  ' ############################ ',
+  '#.LLLLL.##############.LLLLL.#',
+  '#.LLLLL.....BBBBBB.....LLLLL.#',
+  '##############################',
+  '#TTTT#..##..........##..#TTTT#',
+  '#TTTT#..................#TTTT#',
+  '######                  ######'
+];
 const CAR_RIVAL_A_ROWS = [
   ' ############################ ',
   ' #..........................# ',
@@ -1011,9 +1032,9 @@ function buildCar(rows, opt) {
 }
 const _carCache = {};
 // look: { ride, wing, tire } from the garage setup
-function playerCar(steer, lights, phase, frame, broken, look = {}) {
-  const k = [steer, lights, phase, lights === 'nitro' ? frame % 3 : 0, broken ? 1 : 0, look.ride, look.wing, look.tire].join('_');
-  return _carCache[k] || (_carCache[k] = buildCar(CAR_PLAYER_ROWS, { steer, lights, phase, frame, broken, ...look }));
+function playerCar(steer, lights, phase, frame, broken, look = {}, pitch = false) {
+  const k = [steer, lights, phase, lights === 'nitro' ? frame % 3 : 0, broken ? 1 : 0, look.ride, look.wing, look.tire, pitch ? 1 : 0].join('_');
+  return _carCache[k] || (_carCache[k] = buildCar(pitch ? CAR_PITCH_ROWS : CAR_PLAYER_ROWS, { steer, lights, phase, frame, broken, ...look, ...(pitch ? { cabin: 11 } : {}) }));
 }
 // rivals: 3 steer frames x 2 tread phases
 function rivalFrames(rows, cabin) {
@@ -2027,7 +2048,8 @@ function drawPlayerCar(fb, R) {
   if ((p.offroad || p.dirtJolt || p.roughJolt) && p.speed > 100 && Math.random() < (p.roughJolt ? 0.8 : 0.5)) jy = p.roughJolt ? 1 + (Math.random() < 0.4 ? 1 : 0) : 1;
   if (p.h > 0) jy = Math.min(4, Math.round(p.h / 300));       // in the air: the camera rides up with the car, which lifts just a little
   if (p.slip > 0.4 && (R.frame & 2)) jx = p.slipDir;
-  drawSprite(fb, playerCar(st, lights, Math.floor(p.wheel) & 3, R.frame >> 2, p.damage >= 4, p.look), KX + jx, HEIGHT - jy, 1);
+  const pitch = p.air && p.air.t / p.air.T < 0.42;              // nose up off the ramp, level again at the top of the jump
+  drawSprite(fb, playerCar(st, lights, Math.floor(p.wheel) & 3, R.frame >> 2, p.damage >= 4, p.look, pitch), KX + jx, HEIGHT - jy, 1);
   if (R.bird) { const b = R.bird; drawSprite(fb, SPR_BIRD[(R.frame >> 2) & 1], b.x, b.y, 1.4); }
   if (p.nitroT > 0) {
     const fl = SPR_FLAME[(R.frame >> 1) & 1];
@@ -2321,7 +2343,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.5.1';
+const APP_VERSION = '0.5.2';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },

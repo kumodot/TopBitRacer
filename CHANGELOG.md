@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.2 (2026-11-11)
+- Jumps: the car noses up off the ramp (the hood and front show over the roof for the first time), then levels out at the top of the jump.
+
 ## 0.5.1 (2026-11-11)
 - Broken road with a jump ramp (rolled per race, on a straight): warning signs and arrows painted on the ramp lane, then a stretch of potholes. Hit the ramp and you fly: the camera rides up with the car (the road drops out of frame and the horizon dips), the engine revs free, the music fades and slams back on landing.
 - Landing depends on the suspension: high lands soft with a small hop, low slams down, bounces less and fishtails. Land short and you lose speed in the potholes.
