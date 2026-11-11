@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.5 (2026-11-11)
+- Nose-up jump frame follows the car setup: the tall wing shows as a plank across the trunk with its posts, the lip spoiler as a thick trunk edge, and low suspension now hides a tire row (high shows the gap, as before).
+
 ## 0.5.4 (2026-11-11)
 - New nose-up car frame for jumps, from a hand sketch: the roof outline becomes the front with headlights, a wide windshield line with mirrors, pillars opening out to a squashed rear with smaller tail lights and wheels. Shown from takeoff to the peak (the half-tilt frame is gone).
 
