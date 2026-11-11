@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3 (2026-11-11)
+- Jumps: new nose-up animation. Off the ramp the car tilts half way, then fully up (seen almost from above as a trapezoid: headlights and hood far away at the top, windshield, roof, rear window, the rear face tilted down to a strip and 1 px narrower each side), then half way again and level at the peak.
+- Speed lines burst out on takeoff and streak off the bottom of the car on the way up.
+
 ## 0.5.2 (2026-11-11)
 - Jumps: the car noses up off the ramp (the hood and front show over the roof for the first time), then levels out at the top of the jump.
 
