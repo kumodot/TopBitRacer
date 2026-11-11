@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.2 (2026-11-10)
+- Speed lines are now 3D: each one is born far down the road and rushes at the camera, projected through the track, so they bend with curves and follow hills toward the real vanishing point.
+
 ## 0.4.1 (2026-11-10)
 - Payout screen: after each career race the prize and fines count up, then the money rolls into your bank with a payday jingle (press A to skip the count).
 - Cup end: the top 3 now get a bonus (Rookie $1500 / $700 / $300, Pro $5000 / $2500 / $1000, Elite $15000 / $7000 / $3000), counted into the bank the same way. Only the winner unlocks the next cup.
