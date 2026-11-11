@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.4.3.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.4.4.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -71,7 +71,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 
 - **Display:** 1024-byte page-based framebuffer (`x + (y >> 3) * 128`, LSB at the top), the SSD1306 `MONO_VLSB` layout, so the buffer can be pushed to real hardware as is. Adafruit glcdfont 5x7 plus a 3x5 HUD font.
 - **Renderer:** pseudo-3D segment road drawn far to near (hills, curves, tunnels), box-sampled 1-bit sprites, Bayer dithering for gray, fog and weather.
-- **Audio:** 4-channel chip engine (2 pulse, triangle, noise) with a tracker-style sequencer; sound effects steal a channel while they play. Engine drone is a separate voice.
+- **Audio:** 4-channel chip engine (2 pulse, triangle, noise) with a tracker-style sequencer; sound effects steal a channel while they play. Engine drone is a separate voice. Race songs are dynamic: an intensity value from the race picks layers and nudges the tempo on beat and bar boundaries.
 - **Tests:** headless Chrome (Playwright) runs full races and cups through the game loop.
 
 ## Layout
@@ -79,7 +79,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.4.3.html    the game (single file)
+TopBitRacer_v0.4.4.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.3</title>
+<title>TopBitRacer v0.4.4</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.3</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.4</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.3</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.4</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -441,6 +441,8 @@ class BitChip {
     this.engine = null;
     this.vol = { music: 0.6, sfx: 0.8, engine: 1.0 };   // mixer levels (page sliders)
     this.duckK = 1;                                       // music ducking (pause menu)
+    // dynamic music: the race sets an intensity 0..1; 0.55 plays the song as written
+    this.dyn = false; this.intensity = 0.55; this.beatLvl = 0.55; this.barLvl = 0.55;
   }
   init() {
     if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
@@ -539,24 +541,41 @@ class BitChip {
     this.stop();
     const s = SONGS[songId]; if (!s) return;
     this.song = s; this.step = 0; this.nextTime = this.now + 0.08;
+    this.dyn = false; this.beatLvl = this.barLvl = 0.55;
     this.timer = setInterval(() => this.tick(), 25);
     this.tick();
   }
+  setIntensity(k) { this.dyn = true; this.intensity = Math.max(0, Math.min(1, k)); }
   stop() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null; this.song = null;
   }
   tick() {
     const s = this.song; if (!s) return;
-    const stepDur = 60 / s.bpm / 4;
     while (this.nextTime < this.now + 0.12) {
       if (this.step >= s.len) {
         if (!s.loop) { this.stop(); return; }
         this.step = s.loopTo || 0;
       }
+      // layers change on the beat (drums, arp density) and on the bar (bass swap, rush arp), so it stays musical
+      const want = this.dyn ? this.intensity : 0.55;
+      if (this.step % 4 === 0) this.beatLvl = want;
+      if (this.step % 16 === 0) this.barLvl = want;
+      const L = this.beatLvl, LB = this.barLvl, st = this.step;
+      const stepDur = 60 / (s.bpm * (this.dyn ? 1 + (L - 0.55) * 0.16 : 1)) / 4;   // about -9% calm to +7% flat out
       if (this.musicOn) {
         for (let ch = 0; ch < 4; ch++) {
-          const ev = s.tracks[ch][this.step];
+          let ev = s.tracks[ch][st];
+          if (this.dyn) {
+            if (ch === 1) {                                   // arp: gone when calm, eighths when cruising, rush arp flat out
+              if (L < 0.2 || (L < 0.42 && st % 2)) ev = null;
+              if (!ev && LB > 0.78) ev = s.tracks[4][st];
+            } else if (ch === 2) { if (LB > 0.66 && s.tracks[5][st]) ev = s.tracks[5][st]; }
+            else if (ch === 3) {                              // hats drop out when calm, ghost 16ths flat out
+              if (ev && ev.hat && L < 0.25) ev = null;
+              if (!ev && L > 0.8) ev = s.tracks[6][st];
+            }
+          }
           if (!ev) continue;
           if (this.busy[ch] > this.nextTime) continue;
           this.voice(ch, this.nextTime, ev.len * stepDur, ev, this.musicBus);
@@ -660,8 +679,9 @@ function chordNotes(name) {
 // one section -> 4 track arrays
 function buildSection(def) {
   const bars = def.chords.length, len = bars * 16;
-  const tracks = [[], [], [], []];
-  for (let ch = 0; ch < 4; ch++) tracks[ch] = new Array(len).fill(null);
+  // 0 lead, 1 arp, 2 bass, 3 drums; dynamic layers: 4 rush arp, 5 driving bass, 6 ghost hats
+  const tracks = [];
+  for (let ch = 0; ch < 7; ch++) tracks[ch] = new Array(len).fill(null);
   // lead
   const toks = (def.lead || '').trim().split(/\s+/).filter(Boolean);
   for (let i = 0; i < toks.length && i < len; i++) {
@@ -679,6 +699,13 @@ function buildSection(def) {
       else if (def.bass === 'walk') { if (s % 4 === 0) tracks[2][st] = { freq: midiFreq(c.root + 12 + [0, 7, 12, 7][s >> 2]), len: 3, vol: 0.42 }; }
       else { if (s % 4 === 0) tracks[2][st] = { freq: midiFreq(c.root + 12), len: 3, vol: 0.42 }; }
     }
+    // dynamic layers (only heard when the race music is pushed)
+    for (let s = 0; s < 16; s++) {
+      const st = b * 16 + s;
+      tracks[4][st] = { freq: midiFreq(c.root + 36 + c.tones[(s + (s >> 2)) % 4]), len: 0.8, duty: 0.125, vol: 0.06 };
+      if (s % 2 === 0) tracks[5][st] = { freq: midiFreq(c.root + 12 + ((s % 4) === 2 ? 12 : 0)), len: 1.6, vol: 0.42 };
+      if (s % 2 === 1) tracks[6][st] = { len: 0.3, rate: 1, filter: 'highpass', cut: 9000, vol: 0.1, metal: true, decay: true, hat: true };
+    }
     // arp / harmony on pulse B ('echo' is filled after the lead, below)
     if (def.arp && def.arp !== 'echo') {
       for (let s = 0; s < 16; s++) {
@@ -694,8 +721,8 @@ function buildSection(def) {
       const d = pat[s], st = b * 16 + s;
       if (d === 'k') tracks[3][st] = { kick: true, len: 1.1, freq: 175, freqTo: 42, vol: 1.0, decay: true };
       else if (d === 's') tracks[3][st] = { len: 1.3, rate: 0.85, filter: 'highpass', cut: 1100, vol: 0.62, decay: true };
-      else if (d === 'h') tracks[3][st] = { len: 0.45, rate: 1, filter: 'highpass', cut: 8000, vol: 0.2, metal: true, decay: true };
-      else if (d === 'o') tracks[3][st] = { len: 1.6, rate: 1, filter: 'highpass', cut: 6500, vol: 0.18, decay: true };
+      else if (d === 'h') tracks[3][st] = { len: 0.45, rate: 1, filter: 'highpass', cut: 8000, vol: 0.2, metal: true, decay: true, hat: true };
+      else if (d === 'o') tracks[3][st] = { len: 1.6, rate: 1, filter: 'highpass', cut: 6500, vol: 0.18, decay: true, hat: true };
       else if (d === 't') tracks[3][st] = { kick: true, len: 1.0, freq: 260, freqTo: 110, vol: 0.7, decay: true };
     }
   }
@@ -713,7 +740,7 @@ function buildSection(def) {
 // 'A2' the riff with a new color, other names come from def.parts.
 function buildSong(id, def) {
   const form = def.form || ['A'];
-  const tracks = [[], [], [], []];
+  const tracks = [[], [], [], [], [], [], []];
   for (const f of form) {
     let sec;
     if (f === 'A') sec = def;
@@ -722,7 +749,8 @@ function buildSong(id, def) {
                                   drums: 'k...k...k...k.h.', fill: 'k.k.s.s.ssssssss' };
     else sec = { ...def, ...def.parts[f] };
     const part = buildSection(sec);
-    for (let ch = 0; ch < 4; ch++) tracks[ch].push(...part.tracks[ch]);
+    if (sec.bass === 'drive') part.tracks[5].fill(null);   // already driving: nothing to swap in
+    for (let ch = 0; ch < 7; ch++) tracks[ch].push(...part.tracks[ch]);
   }
   return { id, bpm: def.bpm, len: tracks[0].length, tracks, loop: def.loop !== false };
 }
@@ -2107,7 +2135,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.3';
+const APP_VERSION = '0.4.4';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2313,16 +2341,35 @@ function updateStreaks(R, dt) {
 
 // ---------------- damage / wreck ----------------
 const WRECK_TIME = 3.2;
+// ---------------- dynamic music ----------------
+// speed, nitro, slipstream, a chase and the final lap push the race song up (faster, more layers);
+// a hit calms it down for a few seconds
+function updateMood(R, dt) {
+  const p = R.player;
+  if (R.phase !== 'race' || p.finished) { if (R.phase === 'finish') chip.dyn = false; return; }
+  if (R.mood == null) R.mood = 0.4;
+  const sp = p.speed / (MAX_SPEED * p.st.top);
+  let tgt = Math.max(0, Math.min(1, (sp - 0.3) / 0.62)) * 0.74;
+  if (p.nitroT > 0 || p.slingT > 0) tgt += 0.36; else if (p.draft) tgt += 0.12;
+  if (R.cop && R.cop.state !== 'leave' && R.cop.state !== 'parked') tgt += 0.2;
+  if (p.lap === R.laps) tgt += 0.08;
+  if (R.calmT > 0) { R.calmT -= dt; tgt = Math.min(tgt, p.wrecked ? 0.1 : 0.32); }
+  tgt = Math.max(0, Math.min(1, tgt));
+  const rate = tgt > R.mood ? 0.45 : R.calmT > 0 ? 1.4 : 0.3;
+  R.mood += Math.max(-rate * dt, Math.min(rate * dt, tgt - R.mood));
+  chip.setIntensity(R.mood);
+}
+
 function addDamage(R) {
   const p = R.player;
   if (p.wrecked || R.demo || p.finished || p.crashT > 0.3 || p.held) return;
-  p.damage++; R.dmgShow = 2.5;
+  p.damage++; R.dmgShow = 2.5; R.calmT = 3;
   chip.sfx('hit');
   if (p.damage >= p.st.hits) explode(R);
 }
 function explode(R) {
   const p = R.player, rnd = Math.random;
-  R.wrecks = (R.wrecks || 0) + 1;
+  R.wrecks = (R.wrecks || 0) + 1; R.calmT = WRECK_TIME + 2;
   p.wrecked = true; p.wreckT = WRECK_TIME; p.speed = 0; p.nitroT = 0; p.vx = 0; p.slip = 0; p.slingT = 0;
   R.flash = 0.12; R.shakeT = 0.6;
   chip.sfx('explode');
@@ -2720,6 +2767,7 @@ function updateRace(R, dt) {
   if (R.goT > 0) R.goT -= dt;
   if (R.phase === 'race' || R.phase === 'finish') R.time += dt;
   updatePlayer(R, dt);
+  if (!R.demo) updateMood(R, dt);
   updateRivals(R, dt);
   updateCop(R, dt);
   placeCars(R);

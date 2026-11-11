@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.4 (2026-11-10)
+- Dynamic race music: speed, nitro, slingshot, slipstream, a police chase and the final lap push the song up (up to about 7% faster, arpeggios fill in, driving bass, ghost 16th hats); a crash calms it down for a few seconds, a wreck almost to drums and bass. Layers switch on the beat or bar so it stays in time. Menus play the songs as written.
+
 ## 0.4.3 (2026-11-10)
 - Pause menu drops the music to 10%.
 - Resuming a race starts a 3-2-1-GO countdown with the world frozen (you can rev the engine while you wait); the music fades back in on GO.
