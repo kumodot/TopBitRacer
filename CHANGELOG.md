@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.6 (2026-11-11)
+- Rivals drive instead of just aiming at you: they read the next corners and brake before them, take the inside line, and follow the same grip rules as your car. Overcook a corner and they slide wide and scrub speed, more often on snow and rain.
+- Each rival has a skill and an aggression value: better drivers commit to the racing line and misjudge grip less; only some drivers defend their line, and never mid-corner.
+- Snow and rain tracks: rival base pace nudged up to make up for the careful cornering.
+
 ## 0.4.5 (2026-11-11)
 - Fix: rivals no longer slide sideways on the grid before GO.
 - Rivals: wider spread of pace and launch so the field strings out; smooth catch-up (rubber band) that pushes the front runners hardest when you lead and eases off a rival far ahead, so the lead can change hands.

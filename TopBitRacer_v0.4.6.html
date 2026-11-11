@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.4.5</title>
+<title>TopBitRacer v0.4.6</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.4.5</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.4.6</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -100,7 +100,7 @@
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.4.5</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.4.6</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
@@ -1366,8 +1366,8 @@ const THEMES = {
   coast:  { cond: 'dry', ground: [7, 4], road: 0, drawDist: 120, grip: 1.0, sky: 'coast', edge: true, rivalBase: 0.86 },
   desert: { cond: 'dry', ground: [9, 6], road: 0, drawDist: 130, grip: 1.0, sky: 'desert', edge: true, rivalBase: 0.87 },
   metro:  { cond: 'dry', ground: [2, 0], road: 0, drawDist: 110, grip: 1.0, sky: 'metro', edge: true, night: true, rivalBase: 0.88 },
-  alpine: { cond: 'snow', ground: [14, 11], road: 0, drawDist: 110, grip: 0.72, sky: 'alpine', edge: true, snow: true, rivalBase: 0.87 },
-  woods:  { cond: 'wet', ground: [6, 3], road: 0, drawDist: 70, grip: 0.85, sky: 'woods', edge: true, rain: true, fog: true, rivalBase: 0.88 },
+  alpine: { cond: 'snow', ground: [14, 11], road: 0, drawDist: 110, grip: 0.72, sky: 'alpine', edge: true, snow: true, rivalBase: 0.905 },
+  woods:  { cond: 'wet', ground: [6, 3], road: 0, drawDist: 70, grip: 0.85, sky: 'woods', edge: true, rain: true, fog: true, rivalBase: 0.90 },
   country: { cond: 'dry', ground: [6, 3], road: 0, drawDist: 120, grip: 1.0, sky: 'country', edge: true, rivalBase: 0.85 }
 };
 
@@ -2138,7 +2138,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.4.5';
+const APP_VERSION = '0.4.6';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2147,6 +2147,7 @@ const LEVELS = [
 const RIVAL_NAMES = ['ACE', 'VIPER', 'NOVA', 'BLITZ', 'ROCCO', 'JUNO', 'KAZE'];
 const POINTS = [10, 8, 6, 5, 4, 3, 2, 1];
 const CENTRIFUGAL = 0.3;
+const RIVAL_GRIP = 0.78, RIVAL_BRAKE = MAX_SPEED * 0.55;   // rivals: cornering grip (same scale as the player's) and braking
 const COMP_SCRAPE = 0.005, COMP_DAMAGE = 0.010;   // suspension bottoming thresholds (slope change x speed x stiffness)
 
 // ---------------- input (logical buttons, shared by keyboard / touch / gamepad) ----------------
@@ -2215,6 +2216,7 @@ function newRace(trackIdx, demo) {
     cars.push({ name: RIVAL_NAMES[i], z, x, xT: x, speed: 0, lap, spr: SPR_RIVALS[i % 3], steer: 0, finished: false, finishTime: 0, segI: -1,
                 maxSpeed: MAX_SPEED * (theme.rivalBase + LV.add + (cup ? cup.add : 0) - 0.09 + i * 0.024), lane: x,
                 ambition: i / 6, launch: 0.75 + Math.random() * 0.4,
+                skill: 0.78 + 0.22 * (0.5 * i / 6 + 0.5 * Math.random()), aggr: Math.random(), judge: 0, judgeT: 0, slip: 0, laneT: 0,
                 wheel: Math.random() * 4, nitro: LV.nitro, nitroT: 0, blockT: 0, blockCd: 3 + Math.random() * 4, bustT: 0 });
   }
   const R = { T, sky: buildSky(theme.sky), theme, player, cars, all: [...cars, player], bgOff: 0, shakeX: 0, shakeT: 0, frame: 0, time: 0,
@@ -2694,12 +2696,9 @@ function updateRivals(R, dt) {
   for (const c of R.cars) {
     if (R.phase === 'countdown') { c.speed = 0; c.steer = 0; c.xT = c.x; continue; }   // grid holds still until GO
     const seg = segs[Math.floor(c.z / SEG_LEN) % N];
-    let target = c.maxSpeed;
-    // rivals respect the same grip limit as the player
-    const cf = CENTRIFUGAL * (2 - R.theme.grip), ac = Math.abs(seg.curve);
-    if (ac > 0.5) target = Math.min(target, MAX_SPEED * Math.sqrt(0.75 * R.theme.grip / (ac * cf)));
-    if (seg.dirt) target *= 0.9;
     const gap = (progress(R, c) - progress(R, p)) / SEG_LEN;   // > 0: rival ahead of player
+    // ---- pace on the straights: own top speed, catch-up, nitro ----
+    let target = c.maxSpeed;
     if (!R.demo && !p.finished) {
       // catch-up: the further behind you a rival is, the harder it pushes (the front runners most);
       // a rival far ahead eases off. Keeps the race close without everyone glued together.
@@ -2710,11 +2709,41 @@ function updateRivals(R, dt) {
       if (c.nitro > 0 && c.nitroT <= 0 && Math.abs(gap) < 10 && Math.abs(seg.curve) < 1 && Math.random() < dt * 0.35 && R.phase === 'race') {
         c.nitro--; c.nitroT = 2.2; if (Math.abs(gap) < 8) chip.sfx('rivalnitro');
       }
-      // blocking: move into the player's line when being caught
-      c.blockCd -= dt;
-      if (LV.block > 0 && c.blockCd <= 0 && gap > 0.5 && gap < 6 && p.speed > c.speed && Math.random() < dt * LV.block * 2) { c.blockT = 1.2; c.blockCd = 5 + Math.random() * 3; }
     }
     if (c.nitroT > 0) { c.nitroT -= dt; target *= 1.16; }
+    // ---- read the road like a driver: same grip rules as the player, brake BEFORE the corner ----
+    const g = R.theme.grip * (seg.dirt ? 0.82 : 1), cf = CENTRIFUGAL * (2 - R.theme.grip), sp = c.speed / MAX_SPEED;
+    c.judgeT -= dt;
+    if (c.judgeT <= 0) {                     // every few seconds the driver reads the grip a bit right or wrong (worse on snow / rain)
+      c.judgeT = 2 + Math.random() * 2.5;
+      c.judge = (Math.random() * 2 - 0.8) * (1 - c.skill) * (1.7 - R.theme.grip) * 0.55;
+    }
+    const trueLim = RIVAL_GRIP * g;
+    const lim = trueLim * (0.94 + 0.06 * c.skill + c.judge);   // what this driver thinks the car can take
+    let curveAhead = 0;
+    for (let n = 0; n < 16; n++) {
+      const s2 = segs[(seg.index + n) % N], ac = Math.abs(s2.curve);
+      if (n < 8) curveAhead += s2.curve * (1 - n / 9);
+      if (ac < 0.3) continue;
+      const vc = MAX_SPEED * Math.sqrt(lim / (ac * cf)), d = Math.max(0, n * SEG_LEN - (c.z % SEG_LEN));
+      target = Math.min(target, Math.sqrt(vc * vc + 2 * RIVAL_BRAKE * d));
+    }
+    if (seg.dirt) target *= 0.92;
+    // ---- too fast for the corner: the car slides wide and scrubs speed, like yours ----
+    const demand = sp * sp * Math.abs(seg.curve) * cf;
+    c.slip = demand > trueLim && sp > 0.4 ? Math.min(1, c.slip + dt * 2) : Math.max(0, c.slip - dt * 3);
+    if (c.slip > 0) {
+      c.x -= Math.sign(seg.curve) * Math.min(1.2, (demand - trueLim) * 2.5 + 0.2) * c.slip * dt;
+      c.speed -= MAX_SPEED * 0.14 * c.slip * dt;
+      target = Math.min(target, c.speed * 0.97);          // lifts off to catch it
+    }
+    if (Math.abs(c.x) > 1.0) target *= 0.6;               // ran wide onto the shoulder
+    // ---- blocking: some drivers defend their line, but not mid-corner ----
+    if (!R.demo && !p.finished) {
+      c.blockCd -= dt;
+      if (LV.block > 0 && c.blockCd <= 0 && gap > 0.5 && gap < 6 && p.speed > c.speed && Math.abs(curveAhead) < 1.5
+          && Math.random() < dt * LV.block * 2 * (0.15 + c.aggr)) { c.blockT = 1.0; c.blockCd = 5 + Math.random() * 4; }
+    }
     // look ahead for slower cars, change lane
     let blocked = null;
     for (const o of R.all) {
@@ -2730,13 +2759,21 @@ function updateRivals(R, dt) {
       const dz = wrapDz(R, blocked.z - c.z);
       if (dz < SEG_LEN * 1.2 && Math.abs(blocked.x - c.x) < 0.45) target = Math.min(target, blocked.speed * 0.98);
     } else if (c.blockT > 0) { c.xT = Math.max(-0.85, Math.min(0.85, p.x)); }
-    else if (Math.random() < dt * 0.15 || Math.abs(c.xT) > 0.9) c.xT = (Math.random() * 2 - 1) * 0.6;
+    else {
+      // racing line: hug the inside of the corner coming up (better drivers commit more), own lane on the straights
+      c.laneT -= dt;
+      if (c.laneT <= 0) { c.laneT = 5 + Math.random() * 6; c.lane = (Math.random() * 2 - 1) * 0.55; }
+      const k = Math.min(1, Math.abs(curveAhead) / 3) * (0.35 + 0.65 * c.skill);
+      c.xT = c.lane + (Math.sign(curveAhead) * 0.6 - c.lane) * k;
+    }
     if (c.blockT > 0) c.blockT -= dt;
-    const mv = Math.max(-dt * 0.9, Math.min(dt * 0.9, c.xT - c.x));
-    c.x += mv; c.steer = mv / (dt * 0.9 + 1e-6);
+    const rate = 0.9 * (1 - 0.6 * c.slip);
+    const mv = Math.max(-dt * rate, Math.min(dt * rate, c.xT - c.x));
+    c.x += mv; c.steer = mv / (dt * 0.9 + 1e-6) + (c.slip > 0.3 ? Math.sign(seg.curve) : 0);   // countersteer look while sliding
+    c.x = Math.max(-1.6, Math.min(1.6, c.x));
     if (R.phase === 'countdown') target = 0;
     const acc = MAX_SPEED / 4.5 * (R.time < 6 ? c.launch : 1) * (c.nitroT > 0 ? 2 : 1) * (c.bustT > 0 ? 3 : 1);
-    c.speed += Math.sign(target - c.speed) * Math.min(Math.abs(target - c.speed), acc * dt);
+    c.speed += Math.sign(target - c.speed) * Math.min(Math.abs(target - c.speed), (target < c.speed ? RIVAL_BRAKE : acc) * dt);
     const before = c.lap, z0 = c.z;
     moveCar(R, c, c.speed * dt);
     c.wheel += c.speed * dt / 450;
