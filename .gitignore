@@ -1,0 +1,6 @@
+# older local builds kept outside the repo
+_old_versions/
+*.tmp
+Thumbs.db
+desktop.ini
+.DS_Store
