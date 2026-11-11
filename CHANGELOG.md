@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.7 (2026-11-11)
+- Rivals answer your nitro: when you fire one, rivals close by fire theirs after a short reaction (better drivers more often).
+- Catch-up now measured against your own car: when you're ahead, the front runners can reel in a player who is flat out on the straights (before, they topped out around 95% of a stock car in the Rookie Cup). Mid-pack rivals don't.
+- Contenders: the two rivals leading the cup (or the two fastest in a first / free race) start on the front row, drive more cleanly, carry an extra nitro and get a fresh charge every lap.
+
 ## 0.5.6 (2026-11-11)
 - Weather balance: rain and fog are rarer. On the rookie tracks a race now has rain about 1 in 4 times (was ~2 in 5) and fog about 1 in 10 (was ~1 in 4); mid-race changes happen about 1 in 6 races (was 1 in 3). STORM WOODS keeps its stormy character.
 
