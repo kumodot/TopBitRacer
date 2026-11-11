@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.5.0.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.5.1.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -57,6 +57,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 - Pit lane on the right shoulder near the finish line: drive through it to repair damage for free (speed limited while inside). A *PIT>* hint blinks when you are damaged and it is coming up.
 - Dirt sections (Green Hills, Salt Flats, Mirage Run): bumps cost speed with a low ride, rally tires grip best. The track screen shows *DIRT %*, how bumpy it is and a suspension tip.
 - Conditions change every race on the same layout: day, dusk or night; clear, fog, rain, storm or snow; where the dirt sections are; puddles on a wet road. The track screen shows them (and the forecast, *LATER: RAIN?*) before the garage, so you can pick tires. Weather can change mid race.
+- Broken road (about every other race): a stretch of potholes on a straight with a ramp in one lane, arrows painted on the road before it. Line up and jump it, or lose speed in the potholes (less with high suspension and rally tires). High suspension lands soft; low slams down and fishtails. Rivals jump too. Watch out for birds.
 - Slipstream: sit behind a car to charge the draft (speed lines streak past), pull out sideways for a slingshot.
 - Nitro refills Burnout style: *NEAR MISS* (pass a car really close) gives a quarter charge, drafting slowly tops it up. Partly filled charges show in the nitro pips.
 - Off the road: bushes, signs and posts fly away; trees and palms throw you back to the road edge; buildings, rocks and lamp posts nearly stop you. The action keeps going.
@@ -80,7 +81,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.5.0.html    the game (single file)
+TopBitRacer_v0.5.1.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE

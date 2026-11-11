@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1 (2026-11-11)
+- Broken road with a jump ramp (rolled per race, on a straight): warning signs and arrows painted on the ramp lane, then a stretch of potholes. Hit the ramp and you fly: the camera rides up with the car (the road drops out of frame and the horizon dips), the engine revs free, the music fades and slams back on landing.
+- Landing depends on the suspension: high lands soft with a small hop, low slams down, bounces less and fishtails. Land short and you lose speed in the potholes.
+- Missing the ramp costs speed in the potholes; high suspension and rally tires lose the least.
+- Rivals decide whether to take the ramp (better drivers more often) and fly too; the police car doesn't jump.
+- Birds: now and then one crosses your flight path. BIRD STRIKE costs a damage point.
+
 ## 0.5.0 (2026-11-11)
 - Race conditions rolled for every race on the same layout: time of day (day, dusk with a big low sun, night with stars, moon and darker ground), weather (clear, fog, rain, storm, snow on the alpine track), dirt sections that move around, puddles on wet roads.
 - Forecast on the track screen (*LATER: RAIN?*) and weather that can change mid race (rain starting, skies clearing, fog rolling in, snow falling), announced on the ticker. The road soaks fast and dries slowly; grip follows it, for you and for the rivals, and depends on your tires.
