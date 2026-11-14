@@ -21,19 +21,22 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.5.7.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.5.8.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
 
 | Action | Keyboard (two hands) | Keyboard (arrows) | Gamepad | Touch |
 |---|---|---|---|---|
-| Gas | *W* | *Up* or *Z* | A / RT | A |
-| Brake | *S* | *Down* or *X* | B / LT | B |
+| Gas | *W* | *Up* or *Z* | RT / X | A |
+| Brake | *S* | *Down* or *X* | LT / B | B |
 | Steer | *Left* / *Right* | *Left* / *Right* (or *A* / *D*) | stick / D-pad | arrows |
-| Nitro | *E* or *Q* | *C*, *Space*, *Shift* | X / Y / RB | NITRO |
+| Nitro | *E* or *Q* | *C*, *Space*, *Shift* | A / Y | NITRO |
+| Shift up / down (manual gears) | *R* / *F* | *R* / *F* | RB / LB | |
 | Start / pause | *Enter* | *Enter* / *Esc* | Start | START |
 | Music on / off | *M* | *M* | | |
+
+Manual gears are an option in the main menu (*GEARS AUTO / MANUAL*). The right gear pulls a little harder than the automatic box, too high a gear bogs down, and each gear has a rev limiter. On a gamepad, pulling the stick back does not brake (so steering never brakes by accident).
 
 ## Workflow
 
@@ -81,7 +84,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.5.7.html    the game (single file)
+TopBitRacer_v0.5.8.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE

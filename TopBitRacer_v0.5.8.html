@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.5.7</title>
+<title>TopBitRacer v0.5.8</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -67,7 +67,7 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.5.7</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.5.8</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
@@ -96,14 +96,15 @@
 <section class="help">
   Two hands: <kbd>W</kbd> gas <kbd>S</kbd> brake <kbd>E</kbd> nitro + <kbd>&larr;</kbd><kbd>&rarr;</kbd> steer<br>
   Or: <kbd>&uarr;</kbd>/<kbd>Z</kbd> gas <kbd>&darr;</kbd>/<kbd>X</kbd> brake <kbd>C</kbd>/<kbd>Space</kbd> nitro <kbd>Enter</kbd> start / pause <kbd>M</kbd> music<br>
-  Gamepad supported. Sound starts on the first key press or tap. Progress is saved in this browser.
+  Manual gears (menu: GEARS): <kbd>R</kbd> shift up <kbd>F</kbd> shift down.<br>
+  Gamepad: RT gas, LT brake, A nitro, RB / LB shift. Sound starts on the first key press or tap. Progress is saved in this browser.
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.5.7</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.5.8</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
-  <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off.</p>
+  <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>R</kbd> <kbd>F</kbd> shift (manual gears), <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off. Gamepad: RT gas, LT brake, A nitro, RB / LB shift.</p>
   <p id="aboutLic">License: MIT</p>
   <p><button class="btn" id="aboutClose">Close</button></p>
 </dialog>
@@ -2288,7 +2289,7 @@ function updateGarage() {
     chip.sfx('shift'); saveGame();
   }
   if (hit('b')) { if (g.pre) { setState('intro'); } else setState('career'); return; }
-  if (hit('start') || hit('a')) { chip.sfx('select'); if (g.pre) startRace(); else setState('career'); }
+  if (confirmHit()) { chip.sfx('select'); if (g.pre) startRace(); else setState('career'); }
 }
 function drawGarage() {
   fb.clear();
@@ -2330,7 +2331,7 @@ function updateShop() {
   if (hit('up')) { G.shopRow = (G.shopRow + n - 1) % n; G.sellArm = -1; chip.sfx('menu'); }
   if (hit('down')) { G.shopRow = (G.shopRow + 1) % n; G.sellArm = -1; chip.sfx('menu'); }
   if (hit('b') || hit('start')) { setState('career'); return; }
-  if (!hit('a')) return;
+  if (!(hit('a') || hit('ok'))) return;
   const k = SHOP_LIST[G.shopRow], part = PARTS[k];
   if (S.owned.includes(k)) {
     if (G.sellArm !== G.shopRow) { G.sellArm = G.shopRow; chip.sfx('menu'); return; }
@@ -2375,7 +2376,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.5.7';
+const APP_VERSION = '0.5.8';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2388,11 +2389,12 @@ const RIVAL_GRIP = 0.78, RIVAL_BRAKE = MAX_SPEED * 0.55;   // rivals: cornering 
 const COMP_SCRAPE = 0.005, COMP_DAMAGE = 0.010;   // suspension bottoming thresholds (slope change x speed x stiffness)
 
 // ---------------- input (logical buttons, shared by keyboard / touch / gamepad) ----------------
-const BUTTONS = ['left', 'right', 'up', 'down', 'a', 'b', 'c', 'start'];
+const BUTTONS = ['left', 'right', 'up', 'down', 'a', 'b', 'c', 'start', 'ok', 'su', 'sd'];   // ok: gamepad A in menus; su / sd: shift up / down
 const input = { held: {}, pressed: {}, latch: {}, src: { key: {}, touch: {}, pad: {} } };
 const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
-  KeyZ: 'a', KeyX: 'b', KeyC: 'c', KeyE: 'c', KeyQ: 'c', Space: 'c', ShiftLeft: 'c', ShiftRight: 'c', Enter: 'start', Escape: 'start', KeyP: 'start'
+  KeyZ: 'a', KeyX: 'b', KeyC: 'c', KeyE: 'c', KeyQ: 'c', Space: 'c', ShiftLeft: 'c', ShiftRight: 'c', Enter: 'start', Escape: 'start', KeyP: 'start',
+  KeyR: 'su', KeyF: 'sd'
 };
 function pollInput() {
   const pad = input.src.pad; for (const b of BUTTONS) pad[b] = false;
@@ -2404,11 +2406,17 @@ function pollInput() {
     if (gp.axes[0] > 0.4 || B(15)) pad.right = true;
     if (gp.axes[1] < -0.5 || B(12)) pad.up = true;
     if (gp.axes[1] > 0.5 || B(13)) pad.down = true;
-    if (B(0) || B(7)) pad.a = true;
-    if (B(1) || B(6)) pad.b = true;
-    if (B(2) || B(3) || B(5)) pad.c = true;
+    // gamepad: RT / X gas, LT / B brake, A / Y nitro (A also confirms in menus), RB / LB shift up / down
+    if (B(7) || B(2)) pad.a = true;
+    if (B(6) || B(1)) pad.b = true;
+    if (B(0) || B(3)) pad.c = true;
+    if (B(0)) pad.ok = true;
+    if (B(5)) pad.su = true;
+    if (B(4)) pad.sd = true;
     if (B(9) || B(8)) pad.start = true;
   }
+  // racing brake on "down" only from keyboard / touch: a stick pulled slightly back while steering must not brake
+  input.raceDown = !!(input.src.key.down || input.src.touch.down);
   for (const b of BUTTONS) {
     const h = !!(input.src.key[b] || input.src.touch[b] || pad[b]);
     input.pressed[b] = (h && !input.held[b]) || !!input.latch[b];   // latch catches taps shorter than a frame
@@ -2417,14 +2425,21 @@ function pollInput() {
   }
 }
 const btn = (b) => !!input.held[b], hit = (b) => !!input.pressed[b];
-const gasHeld = () => btn('a') || btn('up'), brakeHeld = () => btn('b') || btn('down');
-const confirmHit = () => hit('start') || hit('a');
+const gasHeld = () => btn('a') || btn('up'), brakeHeld = () => btn('b') || input.raceDown;
+const confirmHit = () => hit('start') || hit('a') || hit('ok');
 
 // ---------------- globals ----------------
 const chip = new BitChip();
 let fb = null;
 const G = { state: 'title', t: 0, menu: 0, sel: 0, pause: 0, race: null, demo: null, frame: 0, demoTrack: 0, level: 1,
             mode: 'free', cup: null, save: null, hub: 0 };
+// options kept in this browser
+const OPTS_KEY = 'topbitracer_opts';
+const OPTS = (() => { try { return JSON.parse(localStorage.getItem(OPTS_KEY)) || {}; } catch (e) { return {}; } })();
+const saveOpts = () => { try { localStorage.setItem(OPTS_KEY, JSON.stringify(OPTS)); } catch (e) {} };
+// gearbox: top of each gear as a fraction of the car's top speed
+const GEAR_TOP = [0, 0.16, 0.32, 0.48, 0.64, 0.8, 1.0];
+const autoGear = (sp2) => { let g = 1; while (g < 6 && sp2 > GEAR_TOP[g]) g++; return g; };
 const trackCache = {};
 function getTrack(i) { return trackCache[i] || (trackCache[i] = buildTrack(TRACKS[i])); }
 const STEP = 1 / 60;
@@ -2809,7 +2824,7 @@ function updatePlayer(R, dt) {
     if (rnd() < dt * 9) spawnFX(R, 'smoke', KX + rnd() * 14 - 7, 52, (rnd() * 2 - 1) * 5, -14 - rnd() * 10, 1.1, 1);
     chip.engineSet(0.05, 0, false);
     if (p.wreckT <= 0) {
-      p.wrecked = false; p.damage = 0; p.x = 0; p.vx = 0; p.crashT = 1.6; p.respawned = true;
+      p.wrecked = false; p.damage = 0; p.x = 0; p.vx = 0; p.crashT = 1.6; p.respawned = true; if (OPTS.manual) p.gear = 1;
       chip.sfx('respawn'); msg(R, 'GO!', 0.8);
     }
     return;
@@ -2818,7 +2833,7 @@ function updatePlayer(R, dt) {
   if (p.held) {
     p.holdT -= dt; p.speed = 0; p.draft = false; p.braking = true;
     chip.engineSet(0.08, 0, false);
-    if (p.holdT <= 0) { p.held = false; p.x = p.x * 0.5; p.crashT = 1.2; p.respawned = true; chip.sfx('respawn'); msg(R, 'GO!', 0.8); }
+    if (p.holdT <= 0) { p.held = false; p.x = p.x * 0.5; if (OPTS.manual) p.gear = 1; p.crashT = 1.2; p.respawned = true; chip.sfx('respawn'); msg(R, 'GO!', 0.8); }
     return;
   }
   const auto = R.demo || p.finished || R.demoDrive;
@@ -2908,12 +2923,28 @@ function updatePlayer(R, dt) {
     nw -= 1;
   }
   const vmax = MAX_SPEED * st.top * (nitro ? 1.22 : 1) * (p.draft ? 1.04 : 1) * (sling ? 1.12 : 1);
+  // manual gearbox (option): the right gear pulls a little harder than the auto box, too high a gear bogs, the limiter caps each gear
+  const manual = OPTS.manual && !auto;
+  let gearK = 1;
+  if (manual) {
+    if (hit('su') && p.gear < 6) { p.gear++; chip.sfx('shift'); }
+    if (hit('sd') && p.gear > 1) { p.gear--; chip.sfx('shift', 0.8); }
+    const ga = autoGear(p.speed / MAX_SPEED / st.top);
+    gearK = p.gear === ga ? 1.06 : p.gear < ga ? 1 : Math.max(0.25, 1 - 0.38 * (p.gear - ga));
+  }
 
   // ---- speed ----
   p.braking = ctl.brake;
+  const vPre = p.speed;
   if (ctl.brake) p.speed -= MAX_SPEED * 1.1 * st.brake * dt;
-  else if (ctl.gas || nitro) p.speed += MAX_SPEED / 4.2 * st.acc * (1.25 - p.speed / vmax) * (nitro ? 2.2 : 1) * (sling ? 1.8 : 1) * dt;
+  else if (ctl.gas || nitro) p.speed += MAX_SPEED / 4.2 * st.acc * (1.25 - p.speed / vmax) * (nitro ? 2.2 : 1) * (sling ? 1.8 : 1) * gearK * dt;
   else p.speed -= MAX_SPEED / 5 * dt;
+  if (manual && p.gear < 6) {                                   // rev limiter / engine braking after a downshift
+    const cap = MAX_SPEED * st.top * GEAR_TOP[p.gear] * 1.02;
+    p.limiter = p.speed >= cap * 0.985;
+    // the gas can't push past the limiter; after a downshift the extra speed bleeds off (engine braking)
+    if (p.speed > cap) p.speed = Math.max(cap, Math.min(p.speed, vPre) - (Math.min(p.speed, vPre) - cap) * Math.min(1, dt * 2.5));
+  } else p.limiter = false;
   if (p.speed > vmax) p.speed -= MAX_SPEED * 0.4 * dt;
 
   // ---- suspension bottoming out on compressions (low ride height) ----
@@ -3033,12 +3064,17 @@ function updatePlayer(R, dt) {
   // ---- damage smoke ----
   if (p.damage >= 3 && rnd() < dt * (p.damage >= p.st.hits - 1 ? 14 : 7)) spawnFX(R, 'smoke', KX + rnd() * 8 - 4, 49, -seg.curve * sp * 6 + (rnd() * 2 - 1) * 4, -16 - rnd() * 8, 0.9, 1);
 
-  // ---- gearbox (auto) ----
-  const sp2 = p.speed / MAX_SPEED / st.top, G6 = [0, 0.16, 0.32, 0.48, 0.64, 0.8, 1.0];
-  let gr = 1; while (gr < 6 && sp2 > G6[gr]) gr++;
-  if (gr > p.gear && R.phase === 'race' && !R.demo) chip.sfx('shift');
-  p.gear = gr;
-  p.rpm = Math.min(1.15, 0.18 + 0.82 * (sp2 - G6[gr - 1]) / (G6[gr] - G6[gr - 1]));
+  // ---- gearbox ----
+  const sp2 = p.speed / MAX_SPEED / st.top;
+  if (OPTS.manual && !auto) {
+    p.rpm = Math.min(1.15, 0.15 + 0.85 * sp2 / GEAR_TOP[p.gear]);
+    if (p.limiter && ctl.gas) p.rpm = 0.93 + ((R.frame >> 1) & 1) * 0.07;    // bouncing off the limiter
+  } else {
+    const gr = autoGear(sp2), G6 = GEAR_TOP;
+    if (gr > p.gear && R.phase === 'race' && !R.demo) chip.sfx('shift');
+    p.gear = gr;
+    p.rpm = Math.min(1.15, 0.18 + 0.82 * (sp2 - G6[gr - 1]) / (G6[gr] - G6[gr - 1]));
+  }
   if (!R.demo) chip.engineSet(p.rpm, ctl.gas ? 1 : 0, nitro || sling);
 }
 
@@ -3376,7 +3412,7 @@ function drawHUD(R) {
   fb.hline(0, WIDTH - 1, 7, 0);
   // gear + rpm (bottom left)
   fb.fillRect(0, 56, 32, 8, 0);
-  fb.drawSmall(1, 58, 'G' + p.gear);
+  fb.drawSmall(1, 58, (OPTS.manual ? 'M' : 'G') + p.gear);
   fb.rect(10, 58, 20, 5, 1);
   const rw = Math.round(Math.min(1, p.rpm) * 18);
   if (p.rpm > 0.92 && (R.frame & 4)) fb.ditherRect(11, 59, rw, 3, 8); else fb.fillRect(11, 59, rw, 3, 1);
@@ -3469,7 +3505,8 @@ function drawDemo() {
   renderWorld(fb, G.demo); drawWeather(fb, G.demo);
 }
 
-const MENU_ITEMS = () => ['CAREER', 'FREE RACE', 'LEVEL ' + LEVELS[G.level].name, 'MUSIC ' + (chip.musicOn ? 'ON' : 'OFF'), 'SFX   ' + (chip.sfxOn ? 'ON' : 'OFF')];
+const MENU_ITEMS = () => ['CAREER', 'FREE RACE', 'LEVEL ' + LEVELS[G.level].name, 'MUSIC ' + (chip.musicOn ? 'ON' : 'OFF'), 'SFX   ' + (chip.sfxOn ? 'ON' : 'OFF'),
+  'GEARS ' + (OPTS.manual ? 'MANUAL' : 'AUTO')];
 
 function update(dt) {
   G.t += dt; G.frame++;
@@ -3491,6 +3528,7 @@ function update(dt) {
         else if (G.menu === 2) { G.level = (G.level + (hit('left') ? 2 : 1)) % 3; }
         else if (G.menu === 3) { chip.musicOn = !chip.musicOn; if (!chip.musicOn) chip.stop(); else { chip.song = null; music('title'); } }
         else if (G.menu === 4) { chip.sfxOn = !chip.sfxOn; }
+        else if (G.menu === 5) { OPTS.manual = !OPTS.manual; saveOpts(); }
       }
       break;
     }
@@ -3515,7 +3553,7 @@ function update(dt) {
     }
     case 'pause':
       if (hit('up') || hit('down')) { G.pause ^= 1; chip.sfx('menu'); }
-      if (hit('start') || hit('a')) {
+      if (confirmHit()) {
         chip.sfx('select');
         if (G.pause === 0) {                                     // back in: 3-2-1 to get ready
           G.state = 'race';
@@ -3584,7 +3622,7 @@ function draw() {
       fb.drawSmallC(8, 'TOPBIT RACER');
       fb.hline(22, 105, 15, 1);
       items.forEach((s, i) => {
-        const y = 19 + i * 8;
+        const y = 18 + i * 7;
         if (i === G.menu) { fb.fillRect(21, y - 1, 86, 8, 1); fb.drawText(24, y, s.length > 13 ? s.slice(0, 13) : s, 1, 0); }
         else fb.drawText(24, y, s, 1);
       });

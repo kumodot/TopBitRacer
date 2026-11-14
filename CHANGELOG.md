@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.8 (2026-11-14)
+- Gamepad: pulling the stick (or D-pad) back no longer brakes, so steering can't brake by accident; brake on LT / B.
+- Gamepad: nitro on A (also Y); gas on RT (also X). A still confirms in menus.
+- Optional manual gearbox (main menu: GEARS AUTO / MANUAL): shift with R / F on the keyboard, RB / LB on a gamepad. The right gear pulls a little harder than the auto box, too high a gear bogs down, each gear has a rev limiter, and a downshift engine-brakes. The HUD shows M1..M6.
+
 ## 0.5.7 (2026-11-11)
 - Rivals answer your nitro: when you fire one, rivals close by fire theirs after a short reaction (better drivers more often).
 - Catch-up now measured against your own car: when you're ahead, the front runners can reel in a player who is flat out on the straights (before, they topped out around 95% of a stock car in the Rookie Cup). Mid-pack rivals don't.
