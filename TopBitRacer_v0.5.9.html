@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>TopBitRacer v0.5.8</title>
+<title>TopBitRacer v0.5.9</title>
 <meta name="description" content="TopBitRacer: a 1-bit pseudo-3D racer for a 128x64 OLED. Tune your car, race, outrun the police.">
 <style>
   /* 1-bit page chrome: pure white on black, dithered frames, square controls */
@@ -31,6 +31,22 @@
   canvas#oled { max-width: calc(96vw - 60px); height: auto; }
   canvas.glow { filter: drop-shadow(0 0 3px rgba(255,255,255,.35)); }
   .bezel .tag { font-size: 10px; letter-spacing: 4px; }
+
+  /* full screen: only the game screen in its frame (plus the touch pad on phones) */
+  #stage { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  #stage:fullscreen { width: 100vw; height: 100vh; justify-content: center; background: var(--k); gap: 2vh; cursor: none; }
+  #stage:-webkit-full-screen { width: 100vw; height: 100vh; justify-content: center; background: var(--k); gap: 2vh; cursor: none; }
+  #stage:fullscreen .bezel { padding: 1.2vh; }
+  #stage:-webkit-full-screen .bezel { padding: 1.2vh; }
+  #stage:fullscreen .inner { padding: 1.6vh; }
+  #stage:-webkit-full-screen .inner { padding: 1.6vh; }
+  #stage:fullscreen .tag, #stage:-webkit-full-screen .tag { display: none; }
+  #stage:fullscreen canvas#oled { max-width: none; width: min(calc(100vw - 9vh), calc((100vh - 9vh) * 2)); height: auto; }
+  #stage:-webkit-full-screen canvas#oled { max-width: none; width: min(calc(100vw - 9vh), calc((100vh - 9vh) * 2)); height: auto; }
+  @media (hover: none), (pointer: coarse) {
+    #stage:fullscreen canvas#oled { width: min(calc(100vw - 9vh), calc((100vh - 9vh - 90px) * 2)); }
+    #stage:-webkit-full-screen canvas#oled { width: min(calc(100vw - 9vh), calc((100vh - 9vh - 90px) * 2)); }
+  }
 
   .panel { width: min(820px, 96vw); border: 2px solid var(--w); padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
   .row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: center; }
@@ -67,8 +83,9 @@
 <body>
 <header class="top">
   <canvas id="logo" aria-label="TopBitRacer"></canvas>
-  <div class="pills"><span class="pill" id="ver">v0.5.8</span><button class="btn" id="aboutBtn">About</button></div>
+  <div class="pills"><span class="pill" id="ver">v0.5.9</span><button class="btn" id="aboutBtn">About</button></div>
 </header>
+<div id="stage">
 <div class="bezel"><div class="inner">
   <canvas id="oled" class="glow"></canvas>
   <div class="tag">SSD1306 / 128x64 / 1-BIT</div>
@@ -80,6 +97,8 @@
     <label><input type="checkbox" id="gap" checked> Dot gap</label>
     <label><input type="checkbox" id="glow" checked> Glow</label>
     <button class="btn" id="shot">PNG</button>
+    <button class="btn" id="fs">Full screen</button>
+    <label><input type="checkbox" id="fsAuto"> Auto</label>
     <span id="fps">-- FPS</span>
   </div>
   <div class="row">
@@ -93,15 +112,17 @@
   <div class="grp" style="flex-direction:column;gap:6px"><div class="small" data-btn="start">START</div><div class="small" data-btn="c">NITRO</div></div>
   <div class="grp"><div data-btn="b">B</div><div data-btn="a">A</div></div>
 </div>
+</div>
 <section class="help">
   Two hands: <kbd>W</kbd> gas <kbd>S</kbd> brake <kbd>E</kbd> nitro + <kbd>&larr;</kbd><kbd>&rarr;</kbd> steer<br>
   Or: <kbd>&uarr;</kbd>/<kbd>Z</kbd> gas <kbd>&darr;</kbd>/<kbd>X</kbd> brake <kbd>C</kbd>/<kbd>Space</kbd> nitro <kbd>Enter</kbd> start / pause <kbd>M</kbd> music<br>
   Manual gears (menu: GEARS): <kbd>R</kbd> shift up <kbd>F</kbd> shift down.<br>
-  Gamepad: RT gas, LT brake, A nitro, RB / LB shift. Sound starts on the first key press or tap. Progress is saved in this browser.
+  Gamepad: RT gas, LT brake, A nitro, RB / LB shift, View full screen.<br>
+  Full screen: the button above, <kbd>V</kbd>, double-click the screen, the gamepad View button or SCREEN in the game menu. <i>Auto</i> goes full screen on your first key press or tap. Sound starts on the first key press or tap. Progress is saved in this browser.
 </section>
 <footer id="foot">MIT LICENSE</footer>
 <dialog id="about">
-  <h2>TopBitRacer <span id="aboutVer">v0.5.8</span></h2>
+  <h2>TopBitRacer <span id="aboutVer">v0.5.9</span></h2>
   <p>A 1-bit pseudo-3D racer made for a 128x64 SSD1306 OLED: tune your car in the garage, race three cups, outrun the police.</p>
   <div id="aboutCredit"></div>
   <p><kbd>W</kbd> <kbd>S</kbd> gas / brake, <kbd>&larr;</kbd> <kbd>&rarr;</kbd> steer, <kbd>E</kbd> nitro, <kbd>R</kbd> <kbd>F</kbd> shift (manual gears), <kbd>Enter</kbd> start / pause, <kbd>M</kbd> music on / off. Gamepad: RT gas, LT brake, A nitro, RB / LB shift.</p>
@@ -2376,7 +2397,7 @@ function drawShop() {
 // ============================================================================
 // GAME - states, physics, rivals, police, HUD, menus
 // ============================================================================
-const APP_VERSION = '0.5.8';
+const APP_VERSION = '0.5.9';
 const LEVELS = [
   { name: 'EASY',   add: 0.0,   ahead: 0.94,  behind: 1.06, nitro: 0, block: 0 },
   { name: 'NORMAL', add: 0.035, ahead: 0.97,  behind: 1.08, nitro: 1, block: 0.25 },
@@ -2413,7 +2434,9 @@ function pollInput() {
     if (B(0)) pad.ok = true;
     if (B(5)) pad.su = true;
     if (B(4)) pad.sd = true;
-    if (B(9) || B(8)) pad.start = true;
+    if (B(9)) pad.start = true;
+    if (B(8) && !input.viewHeld && window.toggleFullscreen) window.toggleFullscreen();   // View / Select: full screen
+    input.viewHeld = B(8);
   }
   // racing brake on "down" only from keyboard / touch: a stick pulled slightly back while steering must not brake
   input.raceDown = !!(input.src.key.down || input.src.touch.down);
@@ -3506,10 +3529,11 @@ function drawDemo() {
 }
 
 const MENU_ITEMS = () => ['CAREER', 'FREE RACE', 'LEVEL ' + LEVELS[G.level].name, 'MUSIC ' + (chip.musicOn ? 'ON' : 'OFF'), 'SFX   ' + (chip.sfxOn ? 'ON' : 'OFF'),
-  'GEARS ' + (OPTS.manual ? 'MANUAL' : 'AUTO')];
+  'GEARS ' + (OPTS.manual ? 'MANUAL' : 'AUTO'), 'SCREEN ' + (window.isFullscreen && window.isFullscreen() ? 'FULL' : 'WINDOW')];
 
 function update(dt) {
   G.t += dt; G.frame++;
+  if (G.fsHint > 0) G.fsHint -= dt;
   switch (G.state) {
     case 'title':
       demoRun(dt);
@@ -3529,6 +3553,7 @@ function update(dt) {
         else if (G.menu === 3) { chip.musicOn = !chip.musicOn; if (!chip.musicOn) chip.stop(); else { chip.song = null; music('title'); } }
         else if (G.menu === 4) { chip.sfxOn = !chip.sfxOn; }
         else if (G.menu === 5) { OPTS.manual = !OPTS.manual; saveOpts(); }
+        else if (G.menu === 6 && window.toggleFullscreen) window.toggleFullscreen();
       }
       break;
     }
@@ -3621,11 +3646,16 @@ function draw() {
       panel(18, 5, 92, 57);
       fb.drawSmallC(8, 'TOPBIT RACER');
       fb.hline(22, 105, 15, 1);
-      items.forEach((s, i) => {
-        const y = 18 + i * 7;
+      // 5 rows visible, the list scrolls with the selection
+      const VIS = 5, top = Math.max(0, Math.min(items.length - VIS, G.menu - 2));
+      items.slice(top, top + VIS).forEach((s, k) => {
+        const i = top + k, y = 19 + k * 8;
         if (i === G.menu) { fb.fillRect(21, y - 1, 86, 8, 1); fb.drawText(24, y, s.length > 13 ? s.slice(0, 13) : s, 1, 0); }
         else fb.drawText(24, y, s, 1);
       });
+      if (top > 0) { fb.hline(102, 106, 18, 1); fb.hline(103, 105, 17, 1); fb.setPixel(104, 16, 1); }                 // more above
+      if (top + VIS < items.length) { fb.hline(102, 106, 57, 1); fb.hline(103, 105, 58, 1); fb.setPixel(104, 59, 1); }   // more below
+      if (G.fsHint > 0) { fb.fillRect(14, 26, 100, 13, 0); fb.rect(14, 26, 100, 13, 1); fb.drawSmallC(30, 'TAP OR CLICK THE SCREEN'); }   // the browser wants a real tap first
       break;
     }
     case 'career': drawCareer(); break;
@@ -3799,6 +3829,35 @@ function initUI() {
     const apply = () => { chip.setVol(k, el.value / 100); mix[k] = el.value / 100; try { localStorage.setItem('topbitracer_mix', JSON.stringify(mix)); } catch (e) {} };
     el.addEventListener('input', apply); apply();
   }
+  // full screen: only the game screen and its frame; the OLED renders bigger so the dots stay crisp
+  const stage = $('stage');
+  let prevScale = fb.scale;
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  const fitScale = () => {
+    const k = Math.min(screen.width / WIDTH, screen.height / HEIGHT) * (window.devicePixelRatio || 1);
+    return Math.max(4, Math.min(16, Math.floor(k * 0.9)));
+  };
+  const toggleFS = () => {
+    if (fsEl()) { const ex = (document.exitFullscreen || document.webkitExitFullscreen).call(document); return Promise.resolve(ex); }
+    const req = stage.requestFullscreen || stage.webkitRequestFullscreen;
+    if (!req) return Promise.reject(new Error('no fullscreen'));
+    return Promise.resolve(req.call(stage, { navigationUI: 'hide' }));
+  };
+  const onFS = () => { if (fsEl()) { prevScale = fb.scale; fb.resize(fitScale()); } else fb.resize(prevScale); };
+  document.addEventListener('fullscreenchange', onFS); document.addEventListener('webkitfullscreenchange', onFS);
+  // gamepad View button and the menu item use this; browsers only allow it right after a tap, click or key press
+  window.toggleFullscreen = () => toggleFS().catch(() => { G.fsHint = 3; });
+  window.isFullscreen = () => !!fsEl();
+  $('fs').onclick = () => window.toggleFullscreen();
+  cv.addEventListener('dblclick', () => window.toggleFullscreen());
+  window.addEventListener('keydown', (e) => { if (e.code === 'KeyV' && !e.repeat) window.toggleFullscreen(); });
+  $('fsAuto').checked = !!OPTS.autoFS;
+  $('fsAuto').onchange = (e) => { OPTS.autoFS = e.target.checked; saveOpts(); };
+  const autoFS = (e) => {
+    if (!OPTS.autoFS || fsEl() || (e.target && e.target.closest && e.target.closest('.panel, header, dialog'))) return;
+    window.toggleFullscreen();
+  };
+  window.addEventListener('keydown', autoFS); window.addEventListener('pointerdown', autoFS);
   // about dialog
   const dlg = $('about');
   const links = [];

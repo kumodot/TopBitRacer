@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.9 (2026-11-18)
+- Full screen: only the game screen in its frame (plus the touch pad on phones), rendered at a bigger scale so the dots stay crisp. Toggle with the Full screen button, V, a double-click on the screen, the gamepad View button or SCREEN in the game menu; Auto goes full screen on the first key press or tap. If the browser refuses (no recent tap / key), the menu asks for a tap.
+- Main menu scrolls (5 rows visible) to fit the new items.
+- Gamepad: View / Select now toggles full screen (Start stays start / pause).
+
 ## 0.5.8 (2026-11-14)
 - Gamepad: pulling the stick (or D-pad) back no longer brakes, so steering can't brake by accident; brake on LT / B.
 - Gamepad: nitro on A (also Y); gas on RT (also X). A still confirms in menus.

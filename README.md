@@ -21,7 +21,7 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 ## Run it
 
 - **Online:** https://kumodot.github.io/TopBitRacer/
-- **Local:** download the repo and double click `TopBitRacer_v0.5.8.html`. No server, no install.
+- **Local:** download the repo and double click `TopBitRacer_v0.5.9.html`. No server, no install.
 - Sound starts on the first key press or tap. Progress is saved in the browser (localStorage).
 
 ### Controls
@@ -35,8 +35,11 @@ A Top Gear / Enduro style racer drawn in pure 1-bit on a simulated 128x64 SSD130
 | Shift up / down (manual gears) | *R* / *F* | *R* / *F* | RB / LB | |
 | Start / pause | *Enter* | *Enter* / *Esc* | Start | START |
 | Music on / off | *M* | *M* | | |
+| Full screen | *V* | *V* | View | |
 
 Manual gears are an option in the main menu (*GEARS AUTO / MANUAL*). The right gear pulls a little harder than the automatic box, too high a gear bogs down, and each gear has a rev limiter. On a gamepad, pulling the stick back does not brake (so steering never brakes by accident).
+
+Full screen shows only the game screen in its frame (great on a Steam Deck): the *Full screen* button under the screen, *V*, a double-click on the screen, the gamepad View button, or *SCREEN* in the game menu. Tick *Auto* to go full screen on your first key press or tap. Browsers only allow full screen right after a tap, click or key press, so if a gamepad button is refused the game asks for a tap.
 
 ## Workflow
 
@@ -84,7 +87,7 @@ Manual gears are an option in the main menu (*GEARS AUTO / MANUAL*). The right g
 ```
 index.html                 Pages entry: reads version.json, opens the current build
 version.json               current version + entry file
-TopBitRacer_v0.5.8.html    the game (single file)
+TopBitRacer_v0.5.9.html    the game (single file)
 screenshots/               README images + banner
 docs/                      release notes
 README.md  CHANGELOG.md  LICENSE
